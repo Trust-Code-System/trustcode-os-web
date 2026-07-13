@@ -48,7 +48,7 @@ export function ClientList() {
         description="Search and review client relationships from one operational view."
         actions={<Button onClick={() => router.push("/clients/new")}><Plus aria-hidden className="size-4" />New client</Button>}
       />
-      <section aria-label="Client filters" className="mb-4 grid gap-3 rounded-[var(--radius-lg)] border bg-surface p-4 sm:grid-cols-2 xl:grid-cols-[minmax(16rem,1fr)_12rem_12rem_11rem_auto]">
+      <section aria-label="Client filters" className="surface-panel mb-3 grid gap-2.5 p-2.5 sm:grid-cols-2 xl:grid-cols-[minmax(16rem,1fr)_12rem_12rem_11rem_auto]">
         <DebouncedSearch key={filters.q} initialValue={filters.q} onCommit={(q) => update({ q, page: 1 })} />
         <Select aria-label="Filter by status" value={filters.status} onChange={(event) => update({ status: event.target.value, page: 1 })}>
           <option value="">All statuses</option>
@@ -83,7 +83,7 @@ function ClientListContent({ query, filters, onPageChange }: { query: ReturnType
 
   const { items, meta } = query.data;
   return (
-    <div className="overflow-hidden rounded-[var(--radius-lg)] border bg-surface">
+    <div className="surface-panel overflow-hidden">
       <div className="hidden md:block">
         <Table>
           <TableHead><tr><TableHeader>Client</TableHeader><TableHeader>Status</TableHeader><TableHeader>Pipeline</TableHeader><TableHeader>Owner</TableHeader><TableHeader>Updated</TableHeader><TableHeader><span className="sr-only">Open</span></TableHeader></tr></TableHead>
@@ -116,7 +116,7 @@ function DebouncedSearch({ initialValue, onCommit }: { initialValue: string; onC
   return <SearchField label="Search clients" placeholder="Search name, email, industry…" value={value} onChange={(event) => { const next = event.target.value; setValue(next); if (timer.current) clearTimeout(timer.current); timer.current = setTimeout(() => onCommit(next.trim()), 350); }} />;
 }
 
-function ListSkeleton() { return <div aria-label="Loading clients" role="status" className="overflow-hidden rounded-[var(--radius-lg)] border bg-surface"><span className="sr-only">Loading clients</span>{Array.from({ length: 6 }, (_, index) => <div key={index} className="grid grid-cols-5 gap-6 border-b p-4 last:border-0"><Skeleton className="col-span-2 h-10" /><Skeleton className="h-7" /><Skeleton className="h-7" /><Skeleton className="h-7" /></div>)}</div>; }
+function ListSkeleton() { return <div aria-label="Loading clients" role="status" className="surface-panel overflow-hidden"><span className="sr-only">Loading clients</span>{Array.from({ length: 6 }, (_, index) => <div key={index} className="grid grid-cols-5 gap-4 border-b p-3 last:border-0"><Skeleton className="col-span-2 h-9" /><Skeleton className="h-7" /><Skeleton className="h-7" /><Skeleton className="h-7" /></div>)}</div>; }
 function StatusBadge({ status }: { status: ClientStatus }) { const tone = status === "ACTIVE" ? "success" : status === "PROSPECT" ? "info" : status === "PAUSED" ? "warning" : "neutral"; return <Badge tone={tone}>{label(status)}</Badge>; }
 function label(value: string) { return value.toLowerCase().replaceAll("_", " ").replace(/^./, (letter) => letter.toUpperCase()); }
 function parseStatus(value: string | null): ClientListFilters["status"] { return clientStatuses.some((status) => status === value) ? value as ClientListFilters["status"] : ""; }
