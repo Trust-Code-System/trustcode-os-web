@@ -34,6 +34,9 @@
 - [ ] Activity feed integration (approved read-only fixture layout is complete)
 - [ ] Aggregated dashboard integration (approved read-only fixture layout is complete)
 - [x] Approved Google Stitch visual design integration
+- [x] Compact reference-image presentation redesign across every approved route
+- [x] Responsive 68px icon rail, top navigation, framed workspace, and mobile drawer
+- [x] Premium surface, typography, control, table, and dashboard composition system
 - [ ] All explicitly deferred integrations and AI features
 
 ## Stitch integration session

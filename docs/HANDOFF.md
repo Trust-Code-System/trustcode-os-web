@@ -9,7 +9,7 @@ Last updated: 2026-07-13
 - Added Next.js 16 App Router, strict TypeScript, Tailwind 4, semantic light/dark tokens, shared accessible primitives, and `/dev/components` inspection route.
 - Added normalized API transport, safe errors, cancellation/timeouts, query provider/keys, MSW browser/server infrastructure, mock scenarios, and realistic fictional Client CRM data.
 - Added same-origin auth BFF with HTTP-only cookies, mock/live login, logout, forgot/reset/change password, invite acceptance, session hydration, safe return paths, expired-session handling, protected proxy routes, and admin/member navigation behavior.
-- Added responsive collapsible desktop shell, mobile drawer, quick navigation, notification empty state, avatar fallback, user menu, skip link, and persisted non-sensitive sidebar preference.
+- Added a responsive compact application frame with a 68px desktop icon rail, horizontal top navigation, mobile drawer, quick navigation, notification empty state, avatar fallback, user menu, and skip link.
 - Added typed placeholders for Dashboard, Projects, Meetings, Documents, Activity, Team, Settings, and their planned nested routes.
 - Added functional Client CRM list and detail: debounced URL search, status/pipeline filters, sort, pagination, responsive table/cards, query states, contacts, notes, related records, and activity tabs.
 - Added unit/network-integration tests, Playwright critical flows, automated WCAG A/AA scanning, keyboard skip-link verification, role restriction verification, and viewport overflow checks.
@@ -17,6 +17,8 @@ Last updated: 2026-07-13
 - Verified production brand tokens and added the approved logos under `public/brand`.
 - Added typed read-only presentation fixtures for modules without confirmed contracts. Unsupported actions are disabled; successful backend writes are never simulated.
 - Added route-wide WCAG A/AA, overflow, and screenshot coverage at 320, 768, and 1280 pixels.
+- Redesigned the complete presentation layer around the supplied compact SaaS reference while retaining TrustCode blue-and-white identity, application routes, authentication, API adapters, mock infrastructure, and feature behavior.
+- Added layered surface tokens, Manrope typography, tighter control/table proportions, a reference-inspired dashboard composition, and a dedicated mobile activity-list treatment.
 
 ## Partially completed
 
@@ -57,6 +59,13 @@ Last updated: 2026-07-13
 - Screenshot evidence: 30 local files under ignored `artifacts/stitch-validation`.
 - Final gates: lint passed with zero warnings; strict typecheck passed; 4 Vitest files / 9 tests passed; production build passed; Playwright 10 passed with 4 intentional duplicate-project skips.
 - Final accessibility/responsive result: zero automated WCAG A/AA violations and zero page overflow across the route sweep.
+
+## Compact reference redesign verification
+
+- Preserved the TrustCode logo and blue-and-white identity while adopting the reference image's compact geometry, depth, spacing, and card hierarchy.
+- Captured the dashboard at 320, 768, and 1280 pixels and the redesigned login at 320 and 1280 pixels.
+- Final gates: lint passed with zero warnings; strict typecheck passed; 4 Vitest files / 9 tests passed; production build passed; Playwright 12 passed with 4 intentional duplicate-project skips.
+- Final accessibility/responsive result: zero automated WCAG A/AA violations and zero page overflow across all approved authenticated route captures.
 
 ## Known failures
 
