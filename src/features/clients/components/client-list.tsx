@@ -50,15 +50,15 @@ export function ClientList() {
       />
       <section aria-label="Client filters" className="surface-panel mb-3 grid gap-2.5 p-2.5 sm:grid-cols-2 xl:grid-cols-[minmax(16rem,1fr)_12rem_12rem_11rem_auto]">
         <DebouncedSearch key={filters.q} initialValue={filters.q} onCommit={(q) => update({ q, page: 1 })} />
-        <Select aria-label="Filter by status" value={filters.status} onChange={(event) => update({ status: event.target.value, page: 1 })}>
+        <Select aria-label="Filter by status" value={filters.status} onValueChange={(status) => update({ status, page: 1 })}>
           <option value="">All statuses</option>
           {clientStatuses.map((status) => <option key={status} value={status}>{label(status)}</option>)}
         </Select>
-        <Select aria-label="Filter by pipeline stage" value={filters.pipeline} onChange={(event) => update({ pipeline: event.target.value, page: 1 })}>
+        <Select aria-label="Filter by pipeline stage" value={filters.pipeline} onValueChange={(pipeline) => update({ pipeline, page: 1 })}>
           <option value="">All pipeline stages</option>
           {pipelineStages.map((stage) => <option key={stage} value={stage}>{label(stage)}</option>)}
         </Select>
-        <Select aria-label="Sort clients" value={filters.sort} onChange={(event) => update({ sort: event.target.value, page: 1 })}>
+        <Select aria-label="Sort clients" value={filters.sort} onValueChange={(sort) => update({ sort, page: 1 })}>
           <option value="updated-desc">Recently updated</option>
           <option value="created-desc">Recently created</option>
           <option value="name-asc">Name A–Z</option>

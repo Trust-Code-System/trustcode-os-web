@@ -5,3 +5,7 @@ import { cn } from "@/lib/utils/cn";
 export function BrandLogo({ inverse = false, className }: { inverse?: boolean; className?: string }) {
   return <Image src={inverse ? "/brand/trustcode-system-logo-dark.png" : "/brand/trustcode-systems-logo.png"} alt="TrustCode System" width={1640} height={430} priority className={cn("h-auto w-36", className)} />;
 }
+
+export function BrandMark({ className }: { className?: string }) {
+  return <span aria-hidden className={cn("block size-10 overflow-hidden", className)}><Image src="/brand/trustcode-systems-logo.png" alt="" width={1640} height={430} priority className="h-10 w-auto max-w-none" /></span>;
+}

@@ -1,67 +1,834 @@
-import { Activity, CalendarDays, FileText, Filter, Plus, Search, ShieldCheck, Upload, UsersRound } from "lucide-react";
+import {
+  Activity,
+  CalendarDays,
+  FileText,
+  Filter,
+  Plus,
+  Search,
+  ShieldCheck,
+  Upload,
+  UsersRound,
+} from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
-import { Badge, MetricCard, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/data-display";
+import {
+  Badge,
+  MetricCard,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/data-display";
 import { Input, SearchField, Select } from "@/components/ui/form-controls";
 import { PageHeader, SectionHeader } from "@/components/ui/navigation";
 import type { SessionUser } from "@/features/auth/types/auth";
-import { activity, documents, meetings, projects, team, type ProjectFixture } from "../data/workspace-fixtures";
+import { ProfilePhotoManager } from "@/features/settings/components/profile-photo-manager";
+import {
+  activity,
+  documents,
+  meetings,
+  projects,
+  team,
+  type ProjectFixture,
+} from "../data/workspace-fixtures";
 
-const unavailable = "This action will be enabled when its backend contract is implemented.";
+const unavailable =
+  "This action will be enabled when its backend contract is implemented.";
 
 export function DashboardScreen() {
-  return <><PageHeader title="Good morning, Sajibur" description="Stay on top of your tasks and project progress." actions={<><Button variant="secondary" size="sm"><CalendarDays aria-hidden className="size-4" />This week</Button><Button size="sm" disabled title={unavailable}><Plus aria-hidden className="size-4" />New project</Button></>} />
-    <FixtureNotice />
-    <div className="grid gap-3 xl:grid-cols-[1.08fr_1fr_1.08fr]">
-      <section className="overflow-hidden rounded-[var(--radius-lg)] bg-brand p-4 text-white shadow-[0_14px_30px_rgb(27_63_174/0.22)]"><p className="text-xs font-medium text-white/85">Active clients</p><div className="mt-2 flex items-end justify-between gap-3"><p className="text-3xl font-bold tracking-[-0.045em] tabular-nums">148</p><span className="rounded-full bg-white/14 px-2 py-1 text-[10px] font-semibold text-white">+12% this month</span></div><div className="mt-5 grid grid-cols-3 gap-2">{[["Retainers", "62"], ["Projects", "54"], ["Prospects", "32"]].map(([label, value]) => <div key={label} className="rounded-xl bg-white/10 p-2.5 shadow-[inset_0_1px_0_rgb(255_255_255/0.15)]"><p className="text-[10px] text-white/85">{label}</p><p className="mt-1 text-sm font-bold tabular-nums">{value}</p></div>)}</div></section>
-      <div className="grid grid-cols-2 gap-3"><DashboardStat label="Active projects" value="32" hint="4 at risk" /><DashboardStat label="Open tasks" value="245" hint="42 in progress" /><DashboardStat label="Meetings" value="8" hint="This week" /><DashboardStat label="Completion" value="72%" hint="124 tasks done" /></div>
-      <Panel title="Delivery throughput" action={<span className="text-[10px] text-text-muted">Last 7 months</span>}><DeliveryChart /></Panel>
-    </div>
-    <div className="mt-3 grid gap-3 xl:grid-cols-[0.82fr_1.58fr]">
-      <div className="grid gap-3"><Panel title="Project status"><div className="grid gap-3.5">{projects.map((project) => <Progress key={project.id} label={project.name} value={project.progress} />)}</div></Panel><Panel title="Upcoming deadlines"><ul className="grid gap-2">{projects.map((project) => <li key={project.id} className="flex items-center gap-3 rounded-xl bg-surface-hover/70 p-2.5"><span className="grid size-9 shrink-0 place-items-center rounded-lg bg-surface font-mono text-[9px] font-semibold text-brand shadow-[var(--shadow-1)]">OCT</span><div className="min-w-0"><p className="truncate text-xs font-semibold">{project.name}</p><p className="text-[10px] text-text-muted">{project.deadline}</p></div></li>)}</ul></Panel></div>
-      <Panel title="Recent activities" action={<Button variant="secondary" size="sm">View all</Button>}><ActivityTable /></Panel>
-    </div></>;
+  return (
+    <>
+      <PageHeader
+        title="Good morning, Sajibur"
+        description="Stay on top of your tasks and project progress."
+        actions={
+          <>
+            <Button variant="secondary" size="sm">
+              <CalendarDays aria-hidden className="size-4" />
+              This week
+            </Button>
+            <Button size="sm" disabled title={unavailable}>
+              <Plus aria-hidden className="size-4" />
+              New project
+            </Button>
+          </>
+        }
+      />
+      <div className="grid gap-3 xl:grid-cols-[1.08fr_1fr_1.08fr]">
+        <section className="overflow-hidden rounded-[var(--radius-lg)] bg-brand p-4 text-white shadow-[0_14px_30px_rgb(27_63_174/0.22)]">
+          <p className="text-xs font-medium text-white/85">Active clients</p>
+          <div className="mt-2 flex items-end justify-between gap-3">
+            <p className="text-3xl font-bold tracking-[-0.045em] tabular-nums">
+              148
+            </p>
+            <span className="rounded-full bg-white/14 px-2 py-1 text-[10px] font-semibold text-white">
+              +12% this month
+            </span>
+          </div>
+          <div className="mt-5 grid grid-cols-3 gap-2">
+            {[
+              ["Retainers", "62"],
+              ["Projects", "54"],
+              ["Prospects", "32"],
+            ].map(([label, value]) => (
+              <div
+                key={label}
+                className="rounded-xl bg-white/10 p-2.5 shadow-[inset_0_1px_0_rgb(255_255_255/0.15)]"
+              >
+                <p className="text-[10px] text-white/85">{label}</p>
+                <p className="mt-1 text-sm font-bold tabular-nums">{value}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+        <div className="grid grid-cols-2 gap-3">
+          <DashboardStat label="Active projects" value="32" hint="4 at risk" />
+          <DashboardStat label="Open tasks" value="245" hint="42 in progress" />
+          <DashboardStat label="Meetings" value="8" hint="This week" />
+          <DashboardStat label="Completion" value="72%" hint="124 tasks done" />
+        </div>
+        <Panel
+          title="Delivery throughput"
+          action={
+            <span className="text-[10px] text-text-muted">Last 7 months</span>
+          }
+        >
+          <DeliveryChart />
+        </Panel>
+      </div>
+      <div className="mt-3 grid gap-3 xl:grid-cols-[0.82fr_1.58fr]">
+        <div className="grid gap-3">
+          <Panel title="Project status">
+            <div className="grid gap-3.5">
+              {projects.map((project) => (
+                <Progress
+                  key={project.id}
+                  label={project.name}
+                  value={project.progress}
+                />
+              ))}
+            </div>
+          </Panel>
+          <Panel title="Upcoming deadlines">
+            <ul className="grid gap-2">
+              {projects.map((project) => (
+                <li
+                  key={project.id}
+                  className="flex items-center gap-3 rounded-xl bg-surface-hover/70 p-2.5"
+                >
+                  <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-surface font-mono text-[9px] font-semibold text-brand shadow-[var(--shadow-1)]">
+                    OCT
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-semibold">
+                      {project.name}
+                    </p>
+                    <p className="text-[10px] text-text-muted">
+                      {project.deadline}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </Panel>
+        </div>
+        <Panel
+          title="Recent activities"
+          action={
+            <Button variant="secondary" size="sm">
+              View all
+            </Button>
+          }
+        >
+          <ActivityTable />
+        </Panel>
+      </div>
+    </>
+  );
 }
 
 export function ProjectsScreen() {
-  return <><PageHeader title="Projects" description="Track your engineering and delivery progress." actions={<Button size="sm" disabled title={unavailable}><Plus aria-hidden className="size-4" />Add project</Button>} /><FixtureNotice /><FilterBar placeholder="Search projects..." /><Panel className="overflow-hidden p-0" title=""><ResponsiveProjectList /></Panel></>;
+  return (
+    <>
+      <PageHeader
+        title="Projects"
+        description="Track your engineering and delivery progress."
+        actions={
+          <Button size="sm" disabled title={unavailable}>
+            <Plus aria-hidden className="size-4" />
+            Add project
+          </Button>
+        }
+      />
+      <FilterBar placeholder="Search projects..." />
+      <Panel className="overflow-hidden p-0" title="">
+        <ResponsiveProjectList />
+      </Panel>
+    </>
+  );
 }
 
 export function ProjectWorkspaceScreen({ projectId }: { projectId: string }) {
-  const project = projects.find((item) => item.id === projectId) ?? projects[0]!;
-  return <><PageHeader eyebrow={`${project.status} · ${project.priority} priority`} title={project.name} description={`Client: ${project.client}`} actions={<div className="text-right"><p className="font-mono text-[10px] uppercase text-text-muted">Deadline</p><p className="text-sm font-medium">{project.deadline}</p></div>} /><FixtureNotice /><div className="mb-4 flex gap-5 overflow-x-auto border-b text-sm"><span className="border-b-2 border-brand pb-3 font-medium">Overview</span>{["Tasks", "Milestones", "Team", "Meetings", "Documents", "Activity"].map((tab) => <span key={tab} className="pb-3 text-text-muted">{tab}</span>)}</div><Panel title="Project tasks" action={<Button size="sm" disabled title={unavailable}><Plus aria-hidden className="size-4" />Add task</Button>}><Table><TableHead><tr><TableHeader>Task</TableHeader><TableHeader>Assignee</TableHeader><TableHeader>Status</TableHeader><TableHeader>Priority</TableHeader><TableHeader>Deadline</TableHeader></tr></TableHead><TableBody>{["Database Schema Design", "API Endpoint Documentation", "Initial Client Kickoff"].map((task, index) => <TableRow key={task}><TableCell className="font-medium">{task}</TableCell><TableCell>{["Alex M.", "Sarah J.", "Mike T."][index]}</TableCell><TableCell><Badge tone={index === 2 ? "success" : "info"}>{["In progress", "To do", "Done"][index]}</Badge></TableCell><TableCell>{index === 0 ? "High" : "Medium"}</TableCell><TableCell>Oct {12 + index * 3}</TableCell></TableRow>)}</TableBody></Table></Panel></>;
+  const project =
+    projects.find((item) => item.id === projectId) ?? projects[0]!;
+  return (
+    <>
+      <PageHeader
+        eyebrow={`${project.status} · ${project.priority} priority`}
+        title={project.name}
+        description={`Client: ${project.client}`}
+        actions={
+          <div className="text-right">
+            <p className="font-mono text-[10px] uppercase text-text-muted">
+              Deadline
+            </p>
+            <p className="text-sm font-medium">{project.deadline}</p>
+          </div>
+        }
+      />
+      <div className="mb-4 flex gap-5 overflow-x-auto border-b text-sm">
+        <span className="border-b-2 border-brand pb-3 font-medium">
+          Overview
+        </span>
+        {[
+          "Tasks",
+          "Milestones",
+          "Team",
+          "Meetings",
+          "Documents",
+          "Activity",
+        ].map((tab) => (
+          <span key={tab} className="pb-3 text-text-muted">
+            {tab}
+          </span>
+        ))}
+      </div>
+      <Panel
+        title="Project tasks"
+        action={
+          <Button size="sm" disabled title={unavailable}>
+            <Plus aria-hidden className="size-4" />
+            Add task
+          </Button>
+        }
+      >
+        <Table>
+          <TableHead>
+            <tr>
+              <TableHeader>Task</TableHeader>
+              <TableHeader>Assignee</TableHeader>
+              <TableHeader>Status</TableHeader>
+              <TableHeader>Priority</TableHeader>
+              <TableHeader>Deadline</TableHeader>
+            </tr>
+          </TableHead>
+          <TableBody>
+            {[
+              "Database Schema Design",
+              "API Endpoint Documentation",
+              "Initial Client Kickoff",
+            ].map((task, index) => (
+              <TableRow key={task}>
+                <TableCell className="font-medium">{task}</TableCell>
+                <TableCell>
+                  {["Alex M.", "Sarah J.", "Mike T."][index]}
+                </TableCell>
+                <TableCell>
+                  <Badge tone={index === 2 ? "success" : "info"}>
+                    {["In progress", "To do", "Done"][index]}
+                  </Badge>
+                </TableCell>
+                <TableCell>{index === 0 ? "High" : "Medium"}</TableCell>
+                <TableCell>Oct {12 + index * 3}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Panel>
+    </>
+  );
 }
 
 export function MeetingsScreen() {
   const selected = meetings[0]!;
-  return <><PageHeader title="Meetings" actions={<Button size="sm" disabled title={unavailable}><Plus aria-hidden className="size-4" />Schedule meeting</Button>} /><FixtureNotice /><div className="grid gap-4 xl:grid-cols-[2fr_1fr]"><Panel title="Upcoming meetings"><div className="grid gap-2">{meetings.map((meeting) => <article key={meeting.title} className="grid gap-3 rounded-lg border p-4 sm:grid-cols-[1.2fr_1fr_auto]"><div><p className="font-medium">{meeting.title}</p><p className="mt-1 text-xs text-text-muted">{meeting.when}</p></div><p className="text-sm text-text-secondary">{meeting.client}</p><Badge tone="info">{meeting.status}</Badge></article>)}</div></Panel><Panel title={selected.title}><p className="text-sm text-text-secondary">Tomorrow · 10:00 AM</p><Button variant="secondary" className="mt-4 w-full" disabled title={unavailable}>Join call</Button><div className="mt-4 rounded-lg bg-surface-hover p-4"><SectionHeader title="Action items" /><ul className="grid gap-2 text-sm text-text-secondary"><li>Review API migration strategy</li><li>Finalize cloud vendor selection</li></ul></div></Panel></div></>;
+  return (
+    <>
+      <PageHeader
+        title="Meetings"
+        actions={
+          <Button size="sm" disabled title={unavailable}>
+            <Plus aria-hidden className="size-4" />
+            Schedule meeting
+          </Button>
+        }
+      />
+      <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
+        <Panel title="Upcoming meetings">
+          <div className="grid gap-2">
+            {meetings.map((meeting) => (
+              <article
+                key={meeting.title}
+                className="grid gap-3 rounded-lg border p-4 sm:grid-cols-[1.2fr_1fr_auto]"
+              >
+                <div>
+                  <p className="font-medium">{meeting.title}</p>
+                  <p className="mt-1 text-xs text-text-muted">{meeting.when}</p>
+                </div>
+                <p className="text-sm text-text-secondary">{meeting.client}</p>
+                <Badge tone="info">{meeting.status}</Badge>
+              </article>
+            ))}
+          </div>
+        </Panel>
+        <Panel title={selected.title}>
+          <p className="text-sm text-text-secondary">Tomorrow · 10:00 AM</p>
+          <Button
+            variant="secondary"
+            className="mt-4 w-full"
+            disabled
+            title={unavailable}
+          >
+            Join call
+          </Button>
+          <div className="mt-4 rounded-lg bg-surface-hover p-4">
+            <SectionHeader title="Action items" />
+            <ul className="grid gap-2 text-sm text-text-secondary">
+              <li>Review API migration strategy</li>
+              <li>Finalize cloud vendor selection</li>
+            </ul>
+          </div>
+        </Panel>
+      </div>
+    </>
+  );
 }
 
 export function DocumentsScreen() {
-  return <><PageHeader title="Document Center" description="Manage, securely share, and track all agency assets." actions={<><Button variant="secondary" size="sm" disabled title={unavailable}>New folder</Button><Button size="sm" disabled title={unavailable}><Upload aria-hidden className="size-4" />Upload document</Button></>} /><FixtureNotice /><FilterBar placeholder="Search files, folders, or metadata..." /><Panel className="overflow-hidden p-0" title=""><div className="grid min-h-36 place-items-center border-b border-dashed p-6 text-center"><div><Upload aria-hidden className="mx-auto size-6 text-brand" /><p className="mt-2 text-sm font-medium">Drag & drop files here</p><p className="text-xs text-text-muted">Upload becomes available with the document API.</p></div></div><Table><TableHead><tr><TableHeader>Name</TableHeader><TableHeader>Category</TableHeader><TableHeader>Client</TableHeader><TableHeader>Project</TableHeader><TableHeader>Uploaded by</TableHeader><TableHeader>Date</TableHeader></tr></TableHead><TableBody>{documents.map((document) => <TableRow key={document.name}><TableCell className="font-medium"><span className="inline-flex items-center gap-2"><FileText aria-hidden className="size-4 text-brand" />{document.name}</span></TableCell><TableCell><Badge>{document.category}</Badge></TableCell><TableCell>{document.client}</TableCell><TableCell>{document.project}</TableCell><TableCell>{document.owner}</TableCell><TableCell>{document.date}</TableCell></TableRow>)}</TableBody></Table></Panel></>;
+  return (
+    <>
+      <PageHeader
+        title="Document Center"
+        description="Manage, securely share, and track all agency assets."
+        actions={
+          <>
+            <Button variant="secondary" size="sm" disabled title={unavailable}>
+              New folder
+            </Button>
+            <Button size="sm" disabled title={unavailable}>
+              <Upload aria-hidden className="size-4" />
+              Upload document
+            </Button>
+          </>
+        }
+      />
+      <FilterBar placeholder="Search files, folders, or metadata..." />
+      <Panel className="overflow-hidden p-0" title="">
+        <div className="grid min-h-36 place-items-center border-b border-dashed p-6 text-center">
+          <div>
+            <Upload aria-hidden className="mx-auto size-6 text-brand" />
+            <p className="mt-2 text-sm font-medium">Drag & drop files here</p>
+            <p className="text-xs text-text-muted">
+              Upload becomes available with the document API.
+            </p>
+          </div>
+        </div>
+        <Table>
+          <TableHead>
+            <tr>
+              <TableHeader>Name</TableHeader>
+              <TableHeader>Category</TableHeader>
+              <TableHeader>Client</TableHeader>
+              <TableHeader>Project</TableHeader>
+              <TableHeader>Uploaded by</TableHeader>
+              <TableHeader>Date</TableHeader>
+            </tr>
+          </TableHead>
+          <TableBody>
+            {documents.map((document) => (
+              <TableRow key={document.name}>
+                <TableCell className="font-medium">
+                  <span className="inline-flex items-center gap-2">
+                    <FileText aria-hidden className="size-4 text-brand" />
+                    {document.name}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <Badge>{document.category}</Badge>
+                </TableCell>
+                <TableCell>{document.client}</TableCell>
+                <TableCell>{document.project}</TableCell>
+                <TableCell>{document.owner}</TableCell>
+                <TableCell>{document.date}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Panel>
+    </>
+  );
 }
 
 export function TeamScreen() {
-  return <><PageHeader title="Team" description="Manage organization members and their access roles." actions={<Button size="sm" disabled title={unavailable}><Plus aria-hidden className="size-4" />Invite member</Button>} /><FixtureNotice /><FilterBar placeholder="Search members..." /><Panel className="overflow-hidden p-0" title=""><Table><TableHead><tr><TableHeader>Member</TableHeader><TableHeader>Role</TableHeader><TableHeader>Assigned projects</TableHeader><TableHeader>Active tasks</TableHeader><TableHeader>Status</TableHeader></tr></TableHead><TableBody>{team.map((member) => <TableRow key={member.email}><TableCell><p className="font-medium">{member.name}</p><p className="text-xs text-text-muted">{member.email}</p></TableCell><TableCell><Badge tone={member.role === "Admin" ? "info" : "neutral"}>{member.role}</Badge></TableCell><TableCell>{member.projects}</TableCell><TableCell>{member.tasks} tasks</TableCell><TableCell><span className="inline-flex items-center gap-2 text-sm"><span className={`size-2 rounded-full ${member.status === "Active" ? "bg-success" : "bg-warning"}`} />{member.status}</span></TableCell></TableRow>)}</TableBody></Table></Panel></>;
+  return (
+    <>
+      <PageHeader
+        title="Team"
+        description="Manage organization members and their access roles."
+        actions={
+          <Button size="sm" disabled title={unavailable}>
+            <Plus aria-hidden className="size-4" />
+            Invite member
+          </Button>
+        }
+      />
+      <FilterBar placeholder="Search members..." />
+      <Panel className="overflow-hidden p-0" title="">
+        <Table>
+          <TableHead>
+            <tr>
+              <TableHeader>Member</TableHeader>
+              <TableHeader>Role</TableHeader>
+              <TableHeader>Assigned projects</TableHeader>
+              <TableHeader>Active tasks</TableHeader>
+              <TableHeader>Status</TableHeader>
+            </tr>
+          </TableHead>
+          <TableBody>
+            {team.map((member) => (
+              <TableRow key={member.email}>
+                <TableCell>
+                  <p className="font-medium">{member.name}</p>
+                  <p className="text-xs text-text-muted">{member.email}</p>
+                </TableCell>
+                <TableCell>
+                  <Badge tone={member.role === "Admin" ? "info" : "neutral"}>
+                    {member.role}
+                  </Badge>
+                </TableCell>
+                <TableCell>{member.projects}</TableCell>
+                <TableCell>{member.tasks} tasks</TableCell>
+                <TableCell>
+                  <span className="inline-flex items-center gap-2 text-sm">
+                    <span
+                      className={`size-2 rounded-full ${member.status === "Active" ? "bg-success" : "bg-warning"}`}
+                    />
+                    {member.status}
+                  </span>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Panel>
+    </>
+  );
 }
 
 export function ActivityScreen() {
-  return <><PageHeader title="Activity Feed" description="Monitor system-wide actions and updates." /><FixtureNotice /><div className="mx-auto max-w-5xl"><div className="mb-4 grid gap-3 sm:grid-cols-[11rem_1fr]"><MetricCard label="Total events" value="1,248" /><div className="flex flex-wrap items-center gap-2 rounded-xl border bg-surface p-3">{["All activity", "Projects", "Documents", "Team"].map((filter, index) => <Badge key={filter} tone={index ? "neutral" : "info"}>{filter}</Badge>)}<Button variant="ghost" size="sm" className="ml-auto"><Filter aria-hidden className="size-4" />Filter</Button></div></div><Panel title=""><ol className="grid gap-6">{activity.map((item, index) => <li key={item.actor} className="flex gap-4"><span className="grid size-9 shrink-0 place-items-center rounded-full bg-surface-active text-brand">{index === 1 ? <FileText className="size-4" /> : index === 2 ? <UsersRound className="size-4" /> : <Activity className="size-4" />}</span><div><p className="text-sm"><strong>{item.actor}</strong> {item.action}</p><p className="mt-1 text-xs text-text-secondary">{item.context}</p><p className="mt-1 font-mono text-[10px] text-text-muted">{item.time}</p></div></li>)}</ol><Button variant="secondary" size="sm" className="mx-auto mt-7 flex" disabled title={unavailable}>Load more activity</Button></Panel></div></>;
+  return (
+    <>
+      <PageHeader
+        title="Activity Feed"
+        description="Monitor system-wide actions and updates."
+      />
+      <div className="mx-auto max-w-5xl">
+        <div className="mb-4 grid gap-3 sm:grid-cols-[11rem_1fr]">
+          <MetricCard label="Total events" value="1,248" />
+          <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-surface p-3">
+            {["All activity", "Projects", "Documents", "Team"].map(
+              (filter, index) => (
+                <Badge key={filter} tone={index ? "neutral" : "info"}>
+                  {filter}
+                </Badge>
+              ),
+            )}
+            <Button variant="ghost" size="sm" className="ml-auto">
+              <Filter aria-hidden className="size-4" />
+              Filter
+            </Button>
+          </div>
+        </div>
+        <Panel title="">
+          <ol className="grid gap-6">
+            {activity.map((item, index) => (
+              <li key={item.actor} className="flex gap-4">
+                <span className="grid size-9 shrink-0 place-items-center rounded-full bg-surface-active text-brand">
+                  {index === 1 ? (
+                    <FileText className="size-4" />
+                  ) : index === 2 ? (
+                    <UsersRound className="size-4" />
+                  ) : (
+                    <Activity className="size-4" />
+                  )}
+                </span>
+                <div>
+                  <p className="text-sm">
+                    <strong>{item.actor}</strong> {item.action}
+                  </p>
+                  <p className="mt-1 text-xs text-text-secondary">
+                    {item.context}
+                  </p>
+                  <p className="mt-1 font-mono text-[10px] text-text-muted">
+                    {item.time}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="mx-auto mt-7 flex"
+            disabled
+            title={unavailable}
+          >
+            Load more activity
+          </Button>
+        </Panel>
+      </div>
+    </>
+  );
 }
 
 export function SettingsScreen({ user }: { user: SessionUser }) {
-  const [firstName = "Admin", lastName = "User"] = (user.name ?? "Admin User").split(" ");
-  return <><PageHeader title="Settings" description="Manage your account preferences and security." /><div className="grid gap-4 lg:grid-cols-[13rem_1fr]"><nav aria-label="Settings sections" className="rounded-xl border bg-surface p-2 lg:self-start">{["Profile", "Security", "Appearance", "Notifications"].map((item, index) => index === 1 ? <Link key={item} href="/settings/security" className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm text-text-secondary hover:bg-surface-hover"><ShieldCheck className="size-4" />{item}</Link> : <span key={item} className={`flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm ${index === 0 ? "bg-surface-active font-medium text-brand" : "text-text-secondary"}`}>{index === 0 ? <UsersRound className="size-4" /> : index === 2 ? <Search className="size-4" /> : <Activity className="size-4" />}{item}</span>)}</nav><div className="grid gap-4"><Panel title="Profile information"><p className="mb-5 text-sm text-text-secondary">Update your account profile information and email address.</p><div className="grid gap-4 sm:grid-cols-2"><Field label="First name" value={firstName} /><Field label="Last name" value={lastName} /><div className="sm:col-span-2"><Field label="Email address" value={user.email} /></div><div className="sm:col-span-2"><Field label="Role / title" value={user.role === "ADMIN" ? "System administrator" : "Team member"} /></div></div><Button className="mt-5 sm:ml-auto sm:flex" disabled title={unavailable}>Save changes</Button></Panel><Link href="/settings/security" className="rounded-xl border bg-surface p-5 hover:border-brand"><p className="font-semibold">Security & password</p><p className="mt-1 text-sm text-text-secondary">Use the functional security flow to change your password.</p></Link></div></div></>;
+  const [firstName = "Admin", lastName = "User"] = (
+    user.name ?? "Admin User"
+  ).split(" ");
+  return (
+    <>
+      <PageHeader
+        title="Settings"
+        description="Manage your account preferences and security."
+      />
+      <div className="grid gap-4 lg:grid-cols-[13rem_1fr]">
+        <nav
+          aria-label="Settings sections"
+          className="rounded-xl border bg-surface p-2 lg:self-start"
+        >
+          {["Profile", "Security", "Appearance", "Notifications"].map(
+            (item, index) =>
+              index === 1 ? (
+                <Link
+                  key={item}
+                  href="/settings/security"
+                  className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm text-text-secondary hover:bg-surface-hover"
+                >
+                  <ShieldCheck className="size-4" />
+                  {item}
+                </Link>
+              ) : (
+                <span
+                  key={item}
+                  className={`flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm ${index === 0 ? "bg-surface-active font-medium text-brand" : "text-text-secondary"}`}
+                >
+                  {index === 0 ? (
+                    <UsersRound className="size-4" />
+                  ) : index === 2 ? (
+                    <Search className="size-4" />
+                  ) : (
+                    <Activity className="size-4" />
+                  )}
+                  {item}
+                </span>
+              ),
+          )}
+        </nav>
+        <div className="grid gap-4">
+          <Panel title="Profile information">
+            <p className="mb-5 text-sm text-text-secondary">
+              Update your account profile information and email address.
+            </p>
+            <ProfilePhotoManager user={user} />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="First name" value={firstName} />
+              <Field label="Last name" value={lastName} />
+              <div className="sm:col-span-2">
+                <Field label="Email address" value={user.email} />
+              </div>
+              <div className="sm:col-span-2">
+                <Field
+                  label="Role / title"
+                  value={
+                    user.role === "ADMIN"
+                      ? "System administrator"
+                      : "Team member"
+                  }
+                />
+              </div>
+            </div>
+            <Button
+              className="mt-5 sm:ml-auto sm:flex"
+              disabled
+              title={unavailable}
+            >
+              Save changes
+            </Button>
+          </Panel>
+          <Link
+            href="/settings/security"
+            className="rounded-xl border bg-surface p-5 hover:border-brand"
+          >
+            <p className="font-semibold">Security & password</p>
+            <p className="mt-1 text-sm text-text-secondary">
+              Use the functional security flow to change your password.
+            </p>
+          </Link>
+        </div>
+      </div>
+    </>
+  );
 }
 
-function Panel({ title, action, className = "", children }: { title: string; action?: React.ReactNode; className?: string; children: React.ReactNode }) { return <section className={`surface-panel p-3.5 ${className}`}>{title ? <SectionHeader title={title} action={action} /> : null}{children}</section>; }
-function FixtureNotice() { return <p className="mb-4 flex w-fit max-w-full items-center gap-2 rounded-lg border bg-surface px-3 py-1 font-mono text-[10px] uppercase tracking-wide text-text-muted"><ShieldCheck aria-hidden className="size-3 shrink-0 text-success" /><span className="min-w-0">Presentation fixture · no backend writes</span></p>; }
-function FilterBar({ placeholder }: { placeholder: string }) { return <section aria-label="Filters" className="surface-panel mb-3 flex flex-wrap gap-2 p-2.5"><SearchField placeholder={placeholder} className="min-w-52 flex-1" /><Select aria-label="Status filter" className="w-auto min-w-32"><option>All statuses</option></Select><Button variant="secondary"><Filter aria-hidden className="size-4" />More filters</Button></section>; }
-function Progress({ label, value }: { label: string; value: number }) { return <div><div className="mb-2 flex justify-between gap-4 text-xs"><span>{label}</span><span className="font-mono text-text-muted">{value}%</span></div><div className="h-2 rounded-full bg-surface-active"><div className="h-full rounded-full bg-brand" style={{ width: `${value}%` }} /></div></div>; }
-function ResponsiveProjectList() { return <><div className="hidden md:block"><Table><TableHead><tr><TableHeader>Project name</TableHeader><TableHeader>Client</TableHeader><TableHeader>Status</TableHeader><TableHeader>Priority</TableHeader><TableHeader>Progress</TableHeader><TableHeader>Deadline</TableHeader></tr></TableHead><TableBody>{projects.map((project) => <TableRow key={project.id}><TableCell><Link className="font-medium hover:underline" href={`/projects/${project.id}`}>{project.name}</Link><p className="font-mono text-[10px] text-text-muted">PRJ-{project.id.slice(0, 4).toUpperCase()}</p></TableCell><TableCell>{project.client}</TableCell><TableCell><Badge tone={projectTone(project)}>{project.status}</Badge></TableCell><TableCell>{project.priority}</TableCell><TableCell className="min-w-40"><Progress label="" value={project.progress} /></TableCell><TableCell>{project.deadline}</TableCell></TableRow>)}</TableBody></Table></div><div className="divide-y md:hidden">{projects.map((project) => <Link key={project.id} href={`/projects/${project.id}`} className="block p-4"><div className="flex justify-between gap-3"><p className="font-medium">{project.name}</p><Badge tone={projectTone(project)}>{project.status}</Badge></div><p className="mt-1 text-xs text-text-muted">{project.client} · {project.deadline}</p><div className="mt-4"><Progress label="Progress" value={project.progress} /></div></Link>)}</div></>; }
-function projectTone(project: ProjectFixture): "success" | "warning" | "danger" { return project.status === "Active" ? "success" : project.status === "Delayed" ? "danger" : "warning"; }
-function Field({ label, value }: { label: string; value: string }) { return <label className="grid gap-1.5 text-xs font-medium text-text-secondary">{label}<Input value={value} readOnly /></label>; }
-function DashboardStat({ label, value, hint }: { label: string; value: string; hint: string }) { return <div className="surface-panel p-3.5"><p className="text-[11px] font-medium text-text-secondary">{label}</p><p className="mt-2 text-xl font-bold tracking-[-0.04em] tabular-nums">{value}</p><p className="mt-1 text-[10px] text-text-muted">{hint}</p></div>; }
-function DeliveryChart() { const values = [[44, 24], [58, 34], [51, 29], [63, 39], [72, 45], [57, 31], [48, 27]]; return <div><div className="flex h-32 items-end justify-between gap-2 border-b border-border px-1">{values.map(([delivered, pending], index) => <div key={index} className="flex h-full flex-1 items-end justify-center gap-1"><span className="w-2.5 rounded-t-md bg-brand" style={{ height: `${delivered}%` }} /><span className="w-2.5 rounded-t-md bg-text-primary/82" style={{ height: `${pending}%` }} /></div>)}</div><div className="mt-2 grid grid-cols-7 text-center font-mono text-[8px] text-text-muted">{["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"].map((month) => <span key={month}>{month}</span>)}</div><div className="mt-3 flex gap-4 text-[10px] text-text-muted"><span className="flex items-center gap-1.5"><i className="size-2 rounded-sm bg-brand" />Delivered</span><span className="flex items-center gap-1.5"><i className="size-2 rounded-sm bg-text-primary/82" />In review</span></div></div>; }
-function ActivityTable() { return <><div className="hidden sm:block"><Table><TableHead><tr><TableHeader>Activity</TableHeader><TableHeader>Context</TableHeader><TableHeader>Owner</TableHeader><TableHeader>When</TableHeader></tr></TableHead><TableBody>{activity.map((item) => <TableRow key={item.actor}><TableCell className="font-semibold">{item.action}</TableCell><TableCell className="text-text-secondary">{item.context}</TableCell><TableCell>{item.actor}</TableCell><TableCell className="font-mono text-[10px] text-text-muted">{item.time}</TableCell></TableRow>)}</TableBody></Table></div><ol className="divide-y divide-border sm:hidden">{activity.map((item) => <li key={item.actor} className="py-3 first:pt-0 last:pb-0"><div className="flex items-start justify-between gap-3"><p className="text-xs font-semibold leading-5">{item.action}</p><span className="shrink-0 font-mono text-[9px] text-text-muted">{item.time}</span></div><p className="mt-0.5 text-[11px] leading-4 text-text-secondary">{item.context}</p><p className="mt-1 text-[10px] font-medium text-brand">{item.actor}</p></li>)}</ol></>; }
+function Panel({
+  title,
+  action,
+  className = "",
+  children,
+}: {
+  title: string;
+  action?: React.ReactNode;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className={`surface-panel p-3.5 ${className}`}>
+      {title ? <SectionHeader title={title} action={action} /> : null}
+      {children}
+    </section>
+  );
+}
+function FilterBar({ placeholder }: { placeholder: string }) {
+  return (
+    <section
+      aria-label="Filters"
+      className="surface-panel mb-3 flex flex-wrap gap-2 p-2.5"
+    >
+      <SearchField placeholder={placeholder} className="min-w-52 flex-1" />
+      <Select aria-label="Status filter" className="w-auto min-w-32">
+        <option>All statuses</option>
+      </Select>
+      <Button variant="secondary">
+        <Filter aria-hidden className="size-4" />
+        More filters
+      </Button>
+    </section>
+  );
+}
+function Progress({ label, value }: { label: string; value: number }) {
+  return (
+    <div>
+      <div className="mb-2 flex justify-between gap-4 text-xs">
+        <span>{label}</span>
+        <span className="font-mono text-text-muted">{value}%</span>
+      </div>
+      <div className="h-2 rounded-full bg-surface-active">
+        <div
+          className="h-full rounded-full bg-brand"
+          style={{ width: `${value}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+function ResponsiveProjectList() {
+  return (
+    <>
+      <div className="hidden md:block">
+        <Table>
+          <TableHead>
+            <tr>
+              <TableHeader>Project name</TableHeader>
+              <TableHeader>Client</TableHeader>
+              <TableHeader>Status</TableHeader>
+              <TableHeader>Priority</TableHeader>
+              <TableHeader>Progress</TableHeader>
+              <TableHeader>Deadline</TableHeader>
+            </tr>
+          </TableHead>
+          <TableBody>
+            {projects.map((project) => (
+              <TableRow key={project.id}>
+                <TableCell>
+                  <Link
+                    className="font-medium hover:underline"
+                    href={`/projects/${project.id}`}
+                  >
+                    {project.name}
+                  </Link>
+                  <p className="font-mono text-[10px] text-text-muted">
+                    PRJ-{project.id.slice(0, 4).toUpperCase()}
+                  </p>
+                </TableCell>
+                <TableCell>{project.client}</TableCell>
+                <TableCell>
+                  <Badge tone={projectTone(project)}>{project.status}</Badge>
+                </TableCell>
+                <TableCell>{project.priority}</TableCell>
+                <TableCell className="min-w-40">
+                  <Progress label="" value={project.progress} />
+                </TableCell>
+                <TableCell>{project.deadline}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+      <div className="divide-y md:hidden">
+        {projects.map((project) => (
+          <Link
+            key={project.id}
+            href={`/projects/${project.id}`}
+            className="block p-4"
+          >
+            <div className="flex justify-between gap-3">
+              <p className="font-medium">{project.name}</p>
+              <Badge tone={projectTone(project)}>{project.status}</Badge>
+            </div>
+            <p className="mt-1 text-xs text-text-muted">
+              {project.client} · {project.deadline}
+            </p>
+            <div className="mt-4">
+              <Progress label="Progress" value={project.progress} />
+            </div>
+          </Link>
+        ))}
+      </div>
+    </>
+  );
+}
+function projectTone(
+  project: ProjectFixture,
+): "success" | "warning" | "danger" {
+  return project.status === "Active"
+    ? "success"
+    : project.status === "Delayed"
+      ? "danger"
+      : "warning";
+}
+function Field({ label, value }: { label: string; value: string }) {
+  return (
+    <label className="grid gap-1.5 text-xs font-medium text-text-secondary">
+      {label}
+      <Input value={value} readOnly />
+    </label>
+  );
+}
+function DashboardStat({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string;
+  hint: string;
+}) {
+  return (
+    <div className="surface-panel p-3.5">
+      <p className="text-[11px] font-medium text-text-secondary">{label}</p>
+      <p className="mt-2 text-xl font-bold tracking-[-0.04em] tabular-nums">
+        {value}
+      </p>
+      <p className="mt-1 text-[10px] text-text-muted">{hint}</p>
+    </div>
+  );
+}
+function DeliveryChart() {
+  const values = [
+    [44, 24],
+    [58, 34],
+    [51, 29],
+    [63, 39],
+    [72, 45],
+    [57, 31],
+    [48, 27],
+  ];
+  return (
+    <div>
+      <div className="flex h-32 items-end justify-between gap-2 border-b border-border px-1">
+        {values.map(([delivered, pending], index) => (
+          <div
+            key={index}
+            className="flex h-full flex-1 items-end justify-center gap-1"
+          >
+            <span
+              className="w-2.5 rounded-t-md bg-brand"
+              style={{ height: `${delivered}%` }}
+            />
+            <span
+              className="w-2.5 rounded-t-md bg-text-primary/82"
+              style={{ height: `${pending}%` }}
+            />
+          </div>
+        ))}
+      </div>
+      <div className="mt-2 grid grid-cols-7 text-center font-mono text-[8px] text-text-muted">
+        {["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"].map((month) => (
+          <span key={month}>{month}</span>
+        ))}
+      </div>
+      <div className="mt-3 flex gap-4 text-[10px] text-text-muted">
+        <span className="flex items-center gap-1.5">
+          <i className="size-2 rounded-sm bg-brand" />
+          Delivered
+        </span>
+        <span className="flex items-center gap-1.5">
+          <i className="size-2 rounded-sm bg-text-primary/82" />
+          In review
+        </span>
+      </div>
+    </div>
+  );
+}
+function ActivityTable() {
+  return (
+    <>
+      <div className="hidden sm:block">
+        <Table>
+          <TableHead>
+            <tr>
+              <TableHeader>Activity</TableHeader>
+              <TableHeader>Context</TableHeader>
+              <TableHeader>Owner</TableHeader>
+              <TableHeader>When</TableHeader>
+            </tr>
+          </TableHead>
+          <TableBody>
+            {activity.map((item) => (
+              <TableRow key={item.actor}>
+                <TableCell className="font-semibold">{item.action}</TableCell>
+                <TableCell className="text-text-secondary">
+                  {item.context}
+                </TableCell>
+                <TableCell>{item.actor}</TableCell>
+                <TableCell className="font-mono text-[10px] text-text-muted">
+                  {item.time}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+      <ol className="divide-y divide-border sm:hidden">
+        {activity.map((item) => (
+          <li key={item.actor} className="py-3 first:pt-0 last:pb-0">
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-xs font-semibold leading-5">{item.action}</p>
+              <span className="shrink-0 font-mono text-[9px] text-text-muted">
+                {item.time}
+              </span>
+            </div>
+            <p className="mt-0.5 text-[11px] leading-4 text-text-secondary">
+              {item.context}
+            </p>
+            <p className="mt-1 text-[10px] font-medium text-brand">
+              {item.actor}
+            </p>
+          </li>
+        ))}
+      </ol>
+    </>
+  );
+}

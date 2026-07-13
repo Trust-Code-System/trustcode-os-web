@@ -8,10 +8,11 @@ export function Badge({ children, tone = "neutral" }: { children: ReactNode; ton
   return <span className={cn("inline-flex min-h-6 items-center rounded-[var(--radius-full)] px-2 py-0.5 text-xs font-medium", tones[tone])}>{children}</span>;
 }
 
-export function Avatar({ name, src, size = "md" }: { name: string; src?: string; size?: "sm" | "md" | "lg" }) {
+export function Avatar({ name, src, size = "md" }: { name: string; src?: string; size?: "sm" | "md" | "lg" | "xl" }) {
   const initials = name.split(/\s+/).map((part) => part[0]).slice(0, 2).join("").toUpperCase();
-  const sizes = { sm: "size-8 text-xs", md: "size-10 text-sm", lg: "size-14 text-base" };
-  return <span role="img" aria-label={name} className={cn("relative inline-grid shrink-0 place-items-center overflow-hidden rounded-full bg-surface-active font-semibold text-text-secondary", sizes[size])}>{src ? <Image src={src} alt="" fill sizes={size === "lg" ? "56px" : size === "md" ? "40px" : "32px"} className="object-cover" /> : initials}</span>;
+  const sizes = { sm: "size-8 text-xs", md: "size-10 text-sm", lg: "size-14 text-base", xl: "size-20 text-xl" };
+  const imageSize = { sm: "32px", md: "40px", lg: "56px", xl: "80px" }[size];
+  return <span role="img" aria-label={name} className={cn("relative inline-grid shrink-0 place-items-center overflow-hidden rounded-full bg-surface-active font-semibold text-text-secondary", sizes[size])}>{src ? <Image src={src} alt="" fill sizes={imageSize} unoptimized={src.startsWith("data:") || src.startsWith("blob:")} className="object-cover" /> : initials}</span>;
 }
 
 export function Table(props: TableHTMLAttributes<HTMLTableElement>) { return <div className="overflow-x-auto"><table {...props} className={cn("w-full border-collapse text-left text-sm", props.className)} /></div>; }
