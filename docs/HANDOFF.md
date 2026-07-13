@@ -60,3 +60,7 @@ None in the final quality-gate runs. Playwright deliberately reports skips when 
 ## Exact next action
 
 When the Client backend module lands, export OpenAPI, reconcile the provisional schemas/adapter, add create/edit/archive/contact/note mutations and contract tests, then apply the supplied Google Stitch design through tokens and primitives before starting Projects.
+
+## Local ports
+
+Mock-only development can use the frontend default port 3000. When the Nest API also runs locally on 3000, run this frontend with `pnpm dev --port 3001` and configure backend `APP_URL=http://localhost:3001` for CORS and generated auth links.

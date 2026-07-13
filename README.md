@@ -17,7 +17,7 @@ pnpm dev
 
 Mock mode is enabled by default. Sign in with `admin@trustcode.test` or `member@trustcode.test` and password `TrustCode123!`.
 
-For live API mode, set `NEXT_PUBLIC_USE_MOCKS=false` and set server-only `API_BASE_URL` to the Nest API prefix, for example `http://localhost:3000/api`.
+For live API mode, set `NEXT_PUBLIC_USE_MOCKS=false`, set server-only `API_BASE_URL` to the Nest API prefix (for example `http://localhost:3000/api`), set the API's `APP_URL=http://localhost:3001`, and run the frontend on the non-conflicting port with `pnpm dev --port 3001`.
 
 ## Quality gates
 
