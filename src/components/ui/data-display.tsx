@@ -15,12 +15,12 @@ export function Avatar({ name, src, size = "md" }: { name: string; src?: string;
 }
 
 export function Table(props: TableHTMLAttributes<HTMLTableElement>) { return <div className="overflow-x-auto"><table {...props} className={cn("w-full border-collapse text-left text-sm", props.className)} /></div>; }
-export function TableHead(props: HTMLAttributes<HTMLTableSectionElement>) { return <thead {...props} className={cn("border-b text-xs uppercase tracking-wide text-text-muted", props.className)} />; }
+export function TableHead(props: HTMLAttributes<HTMLTableSectionElement>) { return <thead {...props} className={cn("border-b bg-surface-hover/70 text-[10px] uppercase tracking-[0.08em] text-text-muted", props.className)} />; }
 export function TableBody(props: HTMLAttributes<HTMLTableSectionElement>) { return <tbody {...props} className={cn("divide-y", props.className)} />; }
 export function TableRow(props: HTMLAttributes<HTMLTableRowElement>) { return <tr {...props} className={cn("transition-colors hover:bg-surface-hover", props.className)} />; }
-export function TableHeader(props: ThHTMLAttributes<HTMLTableCellElement>) { return <th {...props} className={cn("px-4 py-3 font-medium", props.className)} />; }
-export function TableCell(props: TdHTMLAttributes<HTMLTableCellElement>) { return <td {...props} className={cn("px-4 py-4 align-middle", props.className)} />; }
+export function TableHeader(props: ThHTMLAttributes<HTMLTableCellElement>) { return <th {...props} className={cn("px-3.5 py-2.5 font-semibold", props.className)} />; }
+export function TableCell(props: TdHTMLAttributes<HTMLTableCellElement>) { return <td {...props} className={cn("px-3.5 py-3 align-middle", props.className)} />; }
 
-export function MetricCard({ label, value, hint }: { label: string; value: ReactNode; hint?: string }) { return <div className="rounded-[var(--radius-lg)] border bg-surface p-5"><p className="text-sm text-text-secondary">{label}</p><p className="mt-2 text-2xl font-semibold">{value}</p>{hint ? <p className="mt-1 text-xs text-text-muted">{hint}</p> : null}</div>; }
+export function MetricCard({ label, value, hint }: { label: string; value: ReactNode; hint?: string }) { return <div className="surface-panel p-4"><p className="text-xs font-medium text-text-secondary">{label}</p><p className="mt-2 text-2xl font-bold tracking-[-0.035em] tabular-nums">{value}</p>{hint ? <p className="mt-1 text-[11px] text-text-muted">{hint}</p> : null}</div>; }
 
 export function TimelineItem({ title, description, timestamp }: { title: string; description?: string; timestamp: string }) { return <li className="relative grid gap-1 border-l pl-5 pb-6 last:pb-0 before:absolute before:-left-1.5 before:top-1 before:size-3 before:rounded-full before:border-2 before:border-surface before:bg-border-strong"><p className="text-sm font-medium">{title}</p>{description ? <p className="text-sm text-text-secondary">{description}</p> : null}<time className="text-xs text-text-muted">{timestamp}</time></li>; }

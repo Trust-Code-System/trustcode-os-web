@@ -5,7 +5,7 @@ import { forwardRef, useId, type InputHTMLAttributes, type ReactNode, type Selec
 
 import { cn } from "@/lib/utils/cn";
 
-const fieldClass = "min-h-11 w-full rounded-[var(--radius-md)] border border-border bg-surface px-3 text-sm text-text-primary shadow-[var(--shadow-1)] placeholder:text-text-muted hover:border-border-strong focus:border-focus focus:outline-none focus:ring-2 focus:ring-focus/20 disabled:cursor-not-allowed disabled:opacity-50 aria-[invalid=true]:border-danger aria-[invalid=true]:ring-danger/20";
+const fieldClass = "min-h-9 w-full rounded-[var(--radius-md)] border border-border bg-surface px-3 text-sm text-text-primary shadow-[var(--shadow-inset)] placeholder:text-text-muted hover:border-border-strong focus:border-focus focus:outline-none focus:ring-2 focus:ring-focus/15 disabled:cursor-not-allowed disabled:opacity-50 aria-[invalid=true]:border-danger aria-[invalid=true]:ring-danger/20";
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(function Input({ className, ...props }, ref) {
   return <input ref={ref} className={cn(fieldClass, className)} {...props} />;

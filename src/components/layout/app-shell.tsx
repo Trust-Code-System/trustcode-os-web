@@ -1,14 +1,13 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bell, ChevronsLeft, ChevronsRight, Menu, Search } from "lucide-react";
+import { Bell, CircleHelp, Menu, Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 
 import { Avatar } from "@/components/ui/data-display";
-import { BrandLogo } from "@/components/brand/brand-logo";
-import { Button, IconButton } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/button";
 import { CommandMenu } from "@/components/ui/navigation";
 import { Dialog, DropdownMenu, Popover, Tooltip } from "@/components/ui/overlays";
 import { authApi } from "@/features/auth/api/auth";
@@ -23,11 +22,9 @@ export function AppShell({ initialUser, children }: { initialUser: SessionUser; 
   const queryClient = useQueryClient();
   const session = useSession(initialUser);
   const user = session.data;
-  const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
 
-  useEffect(() => { const frame = window.requestAnimationFrame(() => setCollapsed(window.localStorage.getItem("tc_sidebar_collapsed") === "true")); return () => window.cancelAnimationFrame(frame); }, []);
   useEffect(() => { if (session.error && "status" in session.error && session.error.status === 401) router.replace(`/login?returnTo=${encodeURIComponent(pathname)}`); }, [pathname, router, session.error]);
   useEffect(() => {
     const listener = (event: KeyboardEvent) => { if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") { event.preventDefault(); setCommandOpen((value) => !value); } };
@@ -36,27 +33,36 @@ export function AppShell({ initialUser, children }: { initialUser: SessionUser; 
   }, []);
 
   const logout = useMutation({ mutationFn: authApi.logout, onSettled: async () => { queryClient.removeQueries(); await queryClient.cancelQueries({ queryKey: sessionKeys.all }); router.replace("/login"); router.refresh(); } });
-  const toggleCollapsed = () => setCollapsed((value) => { window.localStorage.setItem("tc_sidebar_collapsed", String(!value)); return !value; });
+  const allNavigation = [...primaryNavigation, ...secondaryNavigation];
+  const topNavigation = primaryNavigation.filter((item) => ["/dashboard", "/clients", "/projects", "/meetings", "/documents"].includes(item.href));
 
-  return <div className="min-h-screen bg-page">
-    <aside className={cn("fixed inset-y-0 left-0 z-30 hidden bg-sidebar text-white transition-[width] lg:flex lg:flex-col", collapsed ? "w-16" : "w-56")}>
-      <div className="flex h-16 items-center gap-3 border-b border-white/10 px-3">{collapsed ? <span className="grid size-9 shrink-0 place-items-center rounded-[var(--radius-md)] bg-brand text-xs font-bold">TC</span> : <BrandLogo inverse className="w-40" />}</div>
-      <nav aria-label="Primary navigation" className="flex-1 overflow-y-auto p-2"><NavigationList items={primaryNavigation} pathname={pathname} role={user.role} collapsed={collapsed} inverse /><div className="my-3 border-t border-white/10" /><NavigationList items={secondaryNavigation} pathname={pathname} role={user.role} collapsed={collapsed} inverse /></nav>
-      <div className="border-t border-white/10 p-2"><Tooltip content={collapsed ? "Expand sidebar" : "Collapse sidebar"}><Button variant="ghost" className={cn("w-full text-white/70 hover:bg-white/10 hover:text-white", collapsed ? "px-0" : "justify-start")} onClick={toggleCollapsed}>{collapsed ? <ChevronsRight aria-hidden className="size-4" /> : <><ChevronsLeft aria-hidden className="size-4" />Collapse</>}</Button></Tooltip></div>
-    </aside>
+  return <div className="app-viewport">
+    <div className="app-frame">
+      <aside className="hidden w-[4.25rem] shrink-0 flex-col items-center bg-sidebar lg:flex">
+        <Link href="/dashboard" aria-label="TrustCode OS dashboard" className="mt-3 grid size-10 place-items-center rounded-[0.85rem] bg-brand text-xs font-extrabold text-white shadow-[0_8px_18px_rgb(27_63_174/0.24)]">TC</Link>
+        <nav aria-label="Primary navigation" className="mt-8 flex flex-1 flex-col items-center gap-1.5"><RailNavigation items={allNavigation} pathname={pathname} role={user.role} /></nav>
+        <div className="mb-3 grid gap-2"><Tooltip content="Help and support"><IconButton aria-label="Help and support" className="text-text-muted"><CircleHelp aria-hidden className="size-4" /></IconButton></Tooltip><DropdownMenu label="User menu" trigger={<button type="button" className="rounded-full ring-offset-2 focus-visible:outline-2 focus-visible:outline-focus"><Avatar name={user.name ?? user.email} size="sm" /></button>} items={[{ label: user.email, disabled: true }, { label: "Profile settings", href: "/settings/profile" }, { label: logout.isPending ? "Signing out…" : "Sign out", onSelect: () => logout.mutate(), disabled: logout.isPending }]} /></div>
+      </aside>
 
-    <div className={cn("min-w-0", collapsed ? "lg:pl-16" : "lg:pl-56")}>
-      <header className="sticky top-0 z-20 flex h-16 items-center gap-2 border-b bg-surface/95 px-4 backdrop-blur md:px-6">
-        <Dialog open={mobileOpen} onOpenChange={setMobileOpen} side="left" title="TrustCode OS" description="Agency workspace" trigger={<IconButton aria-label="Open navigation" className="lg:hidden"><Menu aria-hidden className="size-5" /></IconButton>}><nav aria-label="Mobile navigation"><NavigationList items={[...primaryNavigation, ...secondaryNavigation]} pathname={pathname} role={user.role} onNavigate={() => setMobileOpen(false)} /></nav></Dialog>
-        <button type="button" onClick={() => setCommandOpen(true)} className="ml-1 flex min-h-10 min-w-0 flex-1 items-center gap-2 rounded-[var(--radius-md)] border bg-surface px-3 text-left text-sm text-text-muted hover:bg-surface-hover md:max-w-sm"><Search aria-hidden className="size-4 shrink-0" /><span className="hidden min-w-0 flex-1 truncate sm:inline">Search navigation</span><kbd className="ml-auto hidden shrink-0 rounded border px-1.5 py-0.5 text-[10px] md:inline">Ctrl K</kbd></button>
-        <div className="ml-auto flex items-center gap-1"><Popover label="Notifications" trigger={<IconButton aria-label="Notifications"><Bell aria-hidden className="size-5" /></IconButton>}><p className="text-sm font-medium">Notifications</p><p className="mt-2 text-sm text-text-secondary">You’re all caught up. New activity will appear here.</p></Popover><DropdownMenu label="User menu" trigger={<button type="button" className="ml-1 rounded-full"><Avatar name={user.name ?? user.email} size="sm" /></button>} items={[{ label: user.email, disabled: true }, { label: "Profile settings", href: "/settings/profile" }, { label: logout.isPending ? "Signing out…" : "Sign out", onSelect: () => logout.mutate(), disabled: logout.isPending }]} /></div>
-      </header>
-      <main id="main-content" className="mx-auto w-full max-w-[90rem] px-4 py-6 md:px-6">{children}</main>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="z-20 flex h-16 shrink-0 items-center gap-2 border-b border-border/70 bg-surface px-3 md:px-4">
+          <Dialog open={mobileOpen} onOpenChange={setMobileOpen} side="left" title="TrustCode OS" description="Agency workspace" trigger={<IconButton aria-label="Open navigation" className="lg:hidden"><Menu aria-hidden className="size-5" /></IconButton>}><nav aria-label="Mobile navigation"><MobileNavigation items={allNavigation} pathname={pathname} role={user.role} onNavigate={() => setMobileOpen(false)} /></nav></Dialog>
+          <nav aria-label="Workspace navigation" className="hidden items-center gap-1 lg:flex">{topNavigation.map((item) => { const active = pathname === item.href || pathname.startsWith(`${item.href}/`); return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={cn("rounded-full px-3 py-2 text-xs font-semibold text-text-secondary transition-colors hover:bg-surface-hover hover:text-text-primary", active && "bg-text-primary text-white hover:bg-text-primary hover:text-white")}>{item.label}</Link>; })}</nav>
+          <button type="button" onClick={() => setCommandOpen(true)} className="ml-auto flex min-h-9 min-w-0 items-center gap-2 rounded-full border bg-surface px-3 text-left text-xs text-text-muted shadow-[var(--shadow-inset)] hover:border-border-strong hover:bg-surface-hover sm:w-48 lg:ml-auto"><Search aria-hidden className="size-4 shrink-0" /><span className="hidden min-w-0 flex-1 truncate sm:inline">Search workspace</span><kbd className="ml-auto hidden rounded-md border px-1.5 py-0.5 font-mono text-[9px] xl:inline">⌘K</kbd></button>
+          <Popover label="Notifications" trigger={<IconButton aria-label="Notifications"><Bell aria-hidden className="size-4" /></IconButton>}><p className="text-sm font-semibold">Notifications</p><p className="mt-2 text-sm text-text-secondary">You’re all caught up. New activity will appear here.</p></Popover>
+          <DropdownMenu label="User menu" trigger={<button type="button" className="ml-1 rounded-full ring-offset-2 focus-visible:outline-2 focus-visible:outline-focus lg:hidden"><Avatar name={user.name ?? user.email} size="sm" /></button>} items={[{ label: user.email, disabled: true }, { label: "Profile settings", href: "/settings/profile" }, { label: logout.isPending ? "Signing out…" : "Sign out", onSelect: () => logout.mutate(), disabled: logout.isPending }]} />
+        </header>
+        <main id="main-content" className="min-h-0 flex-1 overflow-y-auto bg-workspace px-3 py-4 md:px-5 md:py-5">{children}</main>
+      </div>
+      <CommandMenu open={commandOpen} onOpenChange={setCommandOpen} links={quickLinks} />
     </div>
-    <CommandMenu open={commandOpen} onOpenChange={setCommandOpen} links={quickLinks} />
   </div>;
 }
 
-function NavigationList({ items, pathname, role, collapsed = false, onNavigate, inverse = false }: { items: NavigationItem[]; pathname: string; role: SessionUser["role"]; collapsed?: boolean; onNavigate?: () => void; inverse?: boolean }) {
-  return <ul className="grid gap-1">{items.filter((item) => !item.roles || item.roles.includes(role)).map((item) => { const active = pathname === item.href || pathname.startsWith(`${item.href}/`); const Icon = item.icon; const link = <Link href={item.href} {...(onNavigate ? { onClick: onNavigate } : {})} aria-current={active ? "page" : undefined} className={cn("relative flex min-h-11 items-center gap-3 rounded-[var(--radius-md)] px-3 text-sm font-medium", inverse ? "text-white/65 hover:bg-white/10 hover:text-white" : "text-text-secondary hover:bg-surface-hover hover:text-text-primary", active && (inverse ? "bg-white/10 text-white before:absolute before:-left-2 before:h-6 before:w-1 before:rounded-r before:bg-[#6f8eff]" : "bg-surface-active text-text-primary"), collapsed && "justify-center px-0")}><Icon aria-hidden className="size-4.5 shrink-0" />{collapsed ? null : <span className="truncate">{item.label}</span>}</Link>; return <li key={item.href}>{collapsed ? <Tooltip content={item.label}>{link}</Tooltip> : link}</li>; })}</ul>;
+function RailNavigation({ items, pathname, role }: { items: NavigationItem[]; pathname: string; role: SessionUser["role"] }) {
+  return <ul className="grid gap-1.5">{items.filter((item) => !item.roles || item.roles.includes(role)).map((item) => { const active = pathname === item.href || pathname.startsWith(`${item.href}/`); const Icon = item.icon; return <li key={item.href}><Tooltip content={item.label}><Link href={item.href} aria-label={item.label} aria-current={active ? "page" : undefined} className={cn("grid size-10 place-items-center rounded-[0.8rem] text-text-muted transition-[color,background-color,box-shadow,transform] hover:-translate-y-0.5 hover:bg-surface-hover hover:text-text-primary", active && "bg-text-primary text-white shadow-[0_7px_16px_rgb(16_21_31/0.18)] hover:bg-text-primary hover:text-white")}><Icon aria-hidden className="size-[1.05rem]" /></Link></Tooltip></li>; })}</ul>;
+}
+
+function MobileNavigation({ items, pathname, role, onNavigate }: { items: NavigationItem[]; pathname: string; role: SessionUser["role"]; onNavigate: () => void }) {
+  return <ul className="grid gap-1">{items.filter((item) => !item.roles || item.roles.includes(role)).map((item) => { const active = pathname === item.href || pathname.startsWith(`${item.href}/`); const Icon = item.icon; return <li key={item.href}><Link href={item.href} onClick={onNavigate} aria-current={active ? "page" : undefined} className={cn("flex min-h-11 items-center gap-3 rounded-[var(--radius-md)] px-3 text-sm font-semibold text-text-secondary hover:bg-surface-hover hover:text-text-primary", active && "bg-surface-active text-brand")}><Icon aria-hidden className="size-4" />{item.label}</Link></li>; })}</ul>;
 }
