@@ -19,6 +19,8 @@ Last updated: 2026-07-13
 - Added route-wide WCAG A/AA, overflow, and screenshot coverage at 320, 768, and 1280 pixels.
 - Redesigned the complete presentation layer around the supplied compact SaaS reference while retaining TrustCode blue-and-white identity, application routes, authentication, API adapters, mock infrastructure, and feature behavior.
 - Added layered surface tokens, Manrope typography, tighter control/table proportions, a reference-inspired dashboard composition, and a dedicated mobile activity-list treatment.
+- Replaced all native select elements with shared Radix-backed TrustCode Select and MultiSelect controls.
+- Added mock-backed profile-photo upload, preview, replacement, removal, validation, progress, and avatar fallback. The required live endpoint is documented in `docs/PROFILE_PHOTO_CONTRACT.md`.
 
 ## Partially completed
 
