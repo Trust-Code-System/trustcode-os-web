@@ -71,11 +71,6 @@ export function AppShell({
     },
   });
   const allNavigation = [...primaryNavigation, ...secondaryNavigation];
-  const topNavigation = primaryNavigation.filter((item) =>
-    ["/dashboard", "/clients", "/projects", "/meetings", "/documents"].includes(
-      item.href,
-    ),
-  );
 
   return (
     <div className="app-viewport">
@@ -165,30 +160,6 @@ export function AppShell({
               <BrandMark className="lg:hidden" />
               <BrandWordmark className="h-8 w-auto sm:h-9" />
             </Link>
-            <nav
-              aria-label="Workspace navigation"
-              className="ml-4 hidden items-center gap-0.5 rounded-full border border-border/80 bg-workspace/80 p-1 lg:flex"
-            >
-              {topNavigation.map((item) => {
-                const active =
-                  pathname === item.href ||
-                  pathname.startsWith(`${item.href}/`);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    aria-current={active ? "page" : undefined}
-                    className={cn(
-                      "rounded-full px-3.5 py-1.5 text-xs font-semibold text-text-secondary transition-colors hover:bg-surface-hover hover:text-text-primary",
-                      active &&
-                        "bg-text-primary text-white shadow-sm hover:bg-text-primary hover:text-white",
-                    )}
-                  >
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
             <button
               type="button"
               aria-label="Search workspace"
