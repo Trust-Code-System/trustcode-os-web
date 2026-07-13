@@ -1,5 +1,9 @@
 # Frontend Architecture
 
+## Stitch presentation boundary
+
+The approved visual integration is isolated above the existing data and session layers. `src/features/workspace` contains typed, read-only fixtures and screen compositions for modules whose APIs are not confirmed. `src/features/clients` remains the functional reference slice and continues to use its API adapter, TanStack Query hooks, Zod schemas, and MSW handlers. Stitch-generated HTML and screenshots are audit inputs only and are excluded from Git.
+
 ## Runtime shape
 
 The Next.js App Router hosts server-rendered route structure, small client interaction islands, and same-origin route handlers. TanStack Query owns server state. Feature services call the central API client. In mock mode MSW intercepts those same requests.

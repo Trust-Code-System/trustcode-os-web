@@ -1,6 +1,6 @@
 # TrustCode OS Web
 
-Production-oriented frontend foundation for the TrustCode agency operating system. This first implementation intentionally stops at the responsive/auth/API/mock/component foundations plus a Client CRM list and detail reference module.
+Production-oriented frontend for the TrustCode agency operating system. It includes the protected auth/API/mock foundation, functional Client CRM reference module, and the approved Google Stitch visual system across the planned application routes. Modules without confirmed backend contracts are explicitly read-only typed presentation fixtures.
 
 ## Requirements
 
@@ -32,4 +32,4 @@ pnpm test:e2e
 
 ## Documentation
 
-Start with `docs/FRONTEND_MASTER_PLAN.md`, `docs/API_CONTRACTS.md`, `docs/ARCHITECTURE.md`, and `docs/HANDOFF.md`. `docs/FRONTEND_TODO.md` is the source of truth for delivery status.
+Start with `docs/STITCH_IMPLEMENTATION_PLAN.md`, `docs/FRONTEND_MASTER_PLAN.md`, `docs/API_CONTRACTS.md`, `docs/ARCHITECTURE.md`, and `docs/HANDOFF.md`. `docs/FRONTEND_TODO.md` is the source of truth for delivery status.

@@ -26,12 +26,24 @@
 
 - [ ] Client create/edit/archive mutations (await confirmed backend contract)
 - [ ] Client contact/note mutations (await confirmed backend contract)
-- [ ] Team administration workflows
-- [ ] Projects, tasks, and milestones
-- [ ] Meetings
-- [ ] Documents
+- [ ] Team administration mutations (approved read-only fixture layout is complete)
+- [ ] Projects, tasks, and milestones integration (approved read-only fixture layouts are complete)
+- [ ] Meetings integration (approved read-only fixture layout is complete)
+- [ ] Documents integration (approved read-only fixture layout is complete)
 - [ ] Notifications workflows
-- [ ] Activity feed
-- [ ] Aggregated dashboard
-- [ ] Final Google Stitch visual design
+- [ ] Activity feed integration (approved read-only fixture layout is complete)
+- [ ] Aggregated dashboard integration (approved read-only fixture layout is complete)
+- [x] Approved Google Stitch visual design integration
 - [ ] All explicitly deferred integrations and AI features
+
+## Stitch integration session
+
+- [x] Protect foundation branch and create `codex/stitch-ui-integration`
+- [x] Verify authenticated Stitch MCP access
+- [x] Retrieve 12 requested screens/assets and design system
+- [x] Audit live production identity and download approved logos
+- [x] Document the integration map and discrepancies
+- [x] Apply brand tokens, typography, primitives, shell, and login composition
+- [x] Apply approved Clients and Client Profile composition without changing API behavior
+- [x] Add approved typed fixture layouts for Dashboard, Projects, Project Workspace, Meetings, Documents, Team, Activity, and Settings
+- [x] Add 320/768/1280 overflow, screenshot, and WCAG coverage for all approved authenticated routes

@@ -13,16 +13,20 @@ Last updated: 2026-07-13
 - Added typed placeholders for Dashboard, Projects, Meetings, Documents, Activity, Team, Settings, and their planned nested routes.
 - Added functional Client CRM list and detail: debounced URL search, status/pipeline filters, sort, pagination, responsive table/cards, query states, contacts, notes, related records, and activity tabs.
 - Added unit/network-integration tests, Playwright critical flows, automated WCAG A/AA scanning, keyboard skip-link verification, role restriction verification, and viewport overflow checks.
+- Integrated Google Stitch project `2337476445538277491` across Login, Dashboard, Clients, Client Profile, Projects, Project Workspace, Meetings, Documents, Team, Activity, and Settings.
+- Verified production brand tokens and added the approved logos under `public/brand`.
+- Added typed read-only presentation fixtures for modules without confirmed contracts. Unsupported actions are disabled; successful backend writes are never simulated.
+- Added route-wide WCAG A/AA, overflow, and screenshot coverage at 320, 768, and 1280 pixels.
 
 ## Partially completed
 
 - Client CRM mutations are route placeholders only because the backend client module does not exist.
 - Auth BFF is production-shaped but its deployment-domain CSRF/cookie policy needs confirmation before production rollout.
 
-## Not started by explicit session constraint
+## Not started / integration-dependent
 
-- Team management UI, Projects, Tasks, Milestones, Meetings, Documents, Notifications workflows, Activity feed, and final Dashboard.
-- Final Google Stitch visual identity, final layouts, charts, decorative work, integrations, analytics, and AI features.
+- Team, Projects, Tasks, Milestones, Meetings, Documents, Activity, Dashboard, and Settings backend integrations and write workflows.
+- Notifications workflows, live charts, analytics, and AI features.
 
 ## Important files
 
@@ -47,9 +51,18 @@ Last updated: 2026-07-13
 - `pnpm exec playwright test e2e/accessibility.spec.ts --project=chromium --workers=1` — passed with zero WCAG A/AA violations
 - responsive sweep — 320, 375, 390, 430, 768, 1024, 1280, and 1440 px passed without document overflow after the filter-grid breakpoint fix
 
+## Stitch integration verification
+
+- Route sweep: 10 approved authenticated routes scanned with axe and captured at 320, 768, and 1280 px.
+- Screenshot evidence: 30 local files under ignored `artifacts/stitch-validation`.
+- Final gates: lint passed with zero warnings; strict typecheck passed; 4 Vitest files / 9 tests passed; production build passed; Playwright 10 passed with 4 intentional duplicate-project skips.
+- Final accessibility/responsive result: zero automated WCAG A/AA violations and zero page overflow across the route sweep.
+
 ## Known failures
 
 None in the final quality-gate runs. Playwright deliberately reports skips when a viewport-specific assertion is excluded from the other project.
+
+During integration, the expanded route audit caught muted/status contrast regressions and a breakpoint-transition overflow. These were corrected at semantic-token and shell levels before the final run.
 
 ## Backend dependencies
 
@@ -59,7 +72,7 @@ None in the final quality-gate runs. Playwright deliberately reports skips when 
 
 ## Exact next action
 
-When the Client backend module lands, export OpenAPI, reconcile the provisional schemas/adapter, add create/edit/archive/contact/note mutations and contract tests, then apply the supplied Google Stitch design through tokens and primitives before starting Projects.
+When the Client backend module lands, export OpenAPI, reconcile the provisional schemas/adapter, and add create/edit/archive/contact/note mutations and contract tests. Replace each workspace presentation fixture only as its backend contract becomes available while retaining the approved screen composition.
 
 ## Local ports
 
