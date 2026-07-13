@@ -42,7 +42,7 @@ export function DashboardScreen() {
   return (
     <>
       <PageHeader
-        title="Good morning, Sajibur"
+        title="Good evening, Ghost"
         description="Stay on top of your tasks and project progress."
         actions={
           <>

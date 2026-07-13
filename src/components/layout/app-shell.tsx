@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 
-import { BrandLogo, BrandMark } from "@/components/brand/brand-logo";
+import { BrandMark, BrandWordmark } from "@/components/brand/brand-logo";
 import { Avatar } from "@/components/ui/data-display";
 import { IconButton } from "@/components/ui/button";
 import { CommandMenu } from "@/components/ui/navigation";
@@ -90,48 +90,52 @@ export function AppShell({
           </Link>
           <nav
             aria-label="Primary navigation"
-            className="mt-8 flex flex-1 flex-col items-center gap-1.5"
+            className="mt-8 flex flex-1 flex-col items-center"
           >
-            <RailNavigation
-              items={allNavigation}
-              pathname={pathname}
-              role={user.role}
-            />
+            <div className="rounded-full border border-border/80 bg-surface/90 p-1 shadow-[var(--shadow-1)]">
+              <RailNavigation
+                items={allNavigation}
+                pathname={pathname}
+                role={user.role}
+              />
+            </div>
           </nav>
-          <div className="mb-3 grid gap-2">
-            <Tooltip content="Help and support">
-              <IconButton
-                aria-label="Help and support"
-                className="text-text-muted"
-              >
-                <CircleHelp aria-hidden className="size-4" />
-              </IconButton>
-            </Tooltip>
-            <DropdownMenu
-              label="User menu"
-              trigger={
-                <button
-                  type="button"
-                  className="rounded-full ring-offset-2 focus-visible:outline-2 focus-visible:outline-focus"
+          <div className="mb-3 rounded-full border border-border/80 bg-surface/90 p-1 shadow-[var(--shadow-1)]">
+            <div className="grid gap-0.5">
+              <Tooltip content="Help and support">
+                <IconButton
+                  aria-label="Help and support"
+                  className="size-9 text-text-muted"
                 >
-                  <Avatar name={user.name ?? user.email} {...(user.avatarUrl ? { src: user.avatarUrl } : {})} size="sm" />
-                </button>
-              }
-              items={[
-                { label: user.email, disabled: true },
-                { label: "Profile settings", href: "/settings/profile" },
-                {
-                  label: logout.isPending ? "Signing out…" : "Sign out",
-                  onSelect: () => logout.mutate(),
-                  disabled: logout.isPending,
-                },
-              ]}
-            />
+                  <CircleHelp aria-hidden className="size-4" />
+                </IconButton>
+              </Tooltip>
+              <DropdownMenu
+                label="User menu"
+                trigger={
+                  <button
+                    type="button"
+                    className="grid size-9 place-items-center rounded-full ring-offset-2 focus-visible:outline-2 focus-visible:outline-focus"
+                  >
+                    <Avatar name={user.name ?? user.email} {...(user.avatarUrl ? { src: user.avatarUrl } : {})} size="sm" />
+                  </button>
+                }
+                items={[
+                  { label: user.email, disabled: true },
+                  { label: "Profile settings", href: "/settings/profile" },
+                  {
+                    label: logout.isPending ? "Signing out…" : "Sign out",
+                    onSelect: () => logout.mutate(),
+                    disabled: logout.isPending,
+                  },
+                ]}
+              />
+            </div>
           </div>
         </aside>
 
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <header className="z-20 flex h-16 shrink-0 items-center gap-2 border-b border-border/70 bg-surface px-3 md:px-4">
+          <header className="z-20 flex h-16 shrink-0 items-center gap-2 border-b border-border/70 bg-surface px-3 md:px-4 lg:pl-0">
             <Dialog
               open={mobileOpen}
               onOpenChange={setMobileOpen}
@@ -156,13 +160,14 @@ export function AppShell({
             <Link
               href="/dashboard"
               aria-label="TrustCode OS dashboard"
-              className="shrink-0"
+              className="inline-flex shrink-0 items-center gap-1.5 lg:-ml-3.5"
             >
-              <BrandLogo className="w-24 sm:w-28" />
+              <BrandMark className="lg:hidden" />
+              <BrandWordmark className="h-8 w-auto sm:h-9" />
             </Link>
             <nav
               aria-label="Workspace navigation"
-              className="hidden items-center gap-1 lg:flex"
+              className="ml-4 hidden items-center gap-0.5 rounded-full border border-border/80 bg-workspace/80 p-1 lg:flex"
             >
               {topNavigation.map((item) => {
                 const active =
@@ -174,9 +179,9 @@ export function AppShell({
                     href={item.href}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "rounded-full px-3 py-2 text-xs font-semibold text-text-secondary transition-colors hover:bg-surface-hover hover:text-text-primary",
+                      "rounded-full px-3.5 py-1.5 text-xs font-semibold text-text-secondary transition-colors hover:bg-surface-hover hover:text-text-primary",
                       active &&
-                        "bg-text-primary text-white hover:bg-text-primary hover:text-white",
+                        "bg-text-primary text-white shadow-sm hover:bg-text-primary hover:text-white",
                     )}
                   >
                     {item.label}
@@ -259,7 +264,7 @@ function RailNavigation({
   role: SessionUser["role"];
 }) {
   return (
-    <ul className="grid gap-1.5">
+    <ul className="grid gap-0.5">
       {items
         .filter((item) => !item.roles || item.roles.includes(role))
         .map((item) => {
@@ -274,7 +279,7 @@ function RailNavigation({
                   aria-label={item.label}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "grid size-10 place-items-center rounded-[0.8rem] text-text-muted transition-[color,background-color,box-shadow,transform] hover:-translate-y-0.5 hover:bg-surface-hover hover:text-text-primary",
+                    "grid size-9 place-items-center rounded-full text-text-muted transition-[color,background-color,box-shadow,transform] hover:-translate-y-0.5 hover:bg-surface-hover hover:text-text-primary",
                     active &&
                       "bg-text-primary text-white shadow-[0_7px_16px_rgb(16_21_31/0.18)] hover:bg-text-primary hover:text-white",
                   )}

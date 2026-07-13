@@ -4,7 +4,7 @@ import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 
 const routes = [
-  ["dashboard", "/dashboard", "Good morning, Sajibur"],
+  ["dashboard", "/dashboard", "Good evening, Ghost"],
   ["clients", "/clients", "Clients"],
   ["client-profile", "/clients/northstar-logistics", "Northstar Logistics"],
   ["projects", "/projects", "Projects"],

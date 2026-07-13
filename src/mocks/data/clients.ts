@@ -1,6 +1,6 @@
 import type { ClientDetail, ClientOwner, ClientStatus, PipelineStage } from "@/features/clients/types/client";
 
-const amina: ClientOwner = { id: "user_admin", name: "Amina Okafor", email: "admin@trustcode.test" };
+const amina: ClientOwner = { id: "user_admin", name: "Ghost", email: "admin@trustcode.test" };
 const david: ClientOwner = { id: "user_member", name: "David Mensah", email: "member@trustcode.test" };
 
 const seeds: Array<[string, string, string, ClientStatus, PipelineStage, ClientOwner, string]> = [

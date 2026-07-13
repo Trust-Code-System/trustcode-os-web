@@ -9,7 +9,7 @@ type Context = { params: Promise<{ action: string }> };
 type BackendLogin = { user: SessionUser; tokens: { accessToken: string; refreshToken: string } };
 
 const mockUsers: Record<string, SessionUser> = {
-  "admin@trustcode.test": { id: "user_admin", email: "admin@trustcode.test", name: "Amina Okafor", role: "ADMIN" },
+  "admin@trustcode.test": { id: "user_admin", email: "admin@trustcode.test", name: "Ghost", role: "ADMIN" },
   "member@trustcode.test": { id: "user_member", email: "member@trustcode.test", name: "David Mensah", role: "MEMBER" },
 };
 
@@ -18,7 +18,11 @@ export async function GET(_request: NextRequest, context: Context) {
   if (action !== "me") return failure(405, "METHOD_NOT_ALLOWED", "This operation is not supported.");
   if (mockMode()) {
     const user = await readSessionUser();
-    return user ? success(user) : failure(401, "UNAUTHORIZED", "Your session has expired. Please sign in again.");
+    if (!user) return failure(401, "UNAUTHORIZED", "Your session has expired. Please sign in again.");
+    const refreshed = mockUsers[user.email.toLowerCase()];
+    const next = refreshed ? { ...user, ...refreshed } : user;
+    if (refreshed) await setSession({ user: next, mock: true });
+    return success(next);
   }
 
   const store = await import("next/headers").then(({ cookies }) => cookies());
