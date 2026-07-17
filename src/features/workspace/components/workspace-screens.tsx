@@ -4,8 +4,6 @@ import {
   FileText,
   Filter,
   Plus,
-  Search,
-  ShieldCheck,
   Upload,
   UsersRound,
 } from "lucide-react";
@@ -22,10 +20,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/data-display";
-import { Input, SearchField, Select } from "@/components/ui/form-controls";
+import { SearchField, Select } from "@/components/ui/form-controls";
 import { PageHeader, SectionHeader } from "@/components/ui/navigation";
-import type { SessionUser } from "@/features/auth/types/auth";
-import { ProfilePhotoManager } from "@/features/settings/components/profile-photo-manager";
 import {
   activity,
   documents,
@@ -493,95 +489,6 @@ export function ActivityScreen() {
   );
 }
 
-export function SettingsScreen({ user }: { user: SessionUser }) {
-  const [firstName = "Admin", lastName = "User"] = (
-    user.name ?? "Admin User"
-  ).split(" ");
-  return (
-    <>
-      <PageHeader
-        title="Settings"
-        description="Manage your account preferences and security."
-      />
-      <div className="grid gap-4 lg:grid-cols-[13rem_1fr]">
-        <nav
-          aria-label="Settings sections"
-          className="rounded-xl border bg-surface p-2 lg:self-start"
-        >
-          {["Profile", "Security", "Appearance", "Notifications"].map(
-            (item, index) =>
-              index === 1 ? (
-                <Link
-                  key={item}
-                  href="/settings/security"
-                  className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm text-text-secondary hover:bg-surface-hover"
-                >
-                  <ShieldCheck className="size-4" />
-                  {item}
-                </Link>
-              ) : (
-                <span
-                  key={item}
-                  className={`flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm ${index === 0 ? "bg-surface-active font-medium text-brand" : "text-text-secondary"}`}
-                >
-                  {index === 0 ? (
-                    <UsersRound className="size-4" />
-                  ) : index === 2 ? (
-                    <Search className="size-4" />
-                  ) : (
-                    <Activity className="size-4" />
-                  )}
-                  {item}
-                </span>
-              ),
-          )}
-        </nav>
-        <div className="grid gap-4">
-          <Panel title="Profile information">
-            <p className="mb-5 text-sm text-text-secondary">
-              Update your account profile information and email address.
-            </p>
-            <ProfilePhotoManager user={user} />
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="First name" value={firstName} />
-              <Field label="Last name" value={lastName} />
-              <div className="sm:col-span-2">
-                <Field label="Email address" value={user.email} />
-              </div>
-              <div className="sm:col-span-2">
-                <Field
-                  label="Role / title"
-                  value={
-                    user.role === "ADMIN"
-                      ? "System administrator"
-                      : "Team member"
-                  }
-                />
-              </div>
-            </div>
-            <Button
-              className="mt-5 sm:ml-auto sm:flex"
-              disabled
-              title={unavailable}
-            >
-              Save changes
-            </Button>
-          </Panel>
-          <Link
-            href="/settings/security"
-            className="rounded-xl border bg-surface p-5 hover:border-brand"
-          >
-            <p className="font-semibold">Security & password</p>
-            <p className="mt-1 text-sm text-text-secondary">
-              Use the functional security flow to change your password.
-            </p>
-          </Link>
-        </div>
-      </div>
-    </>
-  );
-}
-
 function Panel({
   title,
   action,
@@ -707,14 +614,6 @@ function projectTone(
     : project.status === "Delayed"
       ? "danger"
       : "warning";
-}
-function Field({ label, value }: { label: string; value: string }) {
-  return (
-    <label className="grid gap-1.5 text-xs font-medium text-text-secondary">
-      {label}
-      <Input value={value} readOnly />
-    </label>
-  );
 }
 function DashboardStat({
   label,
