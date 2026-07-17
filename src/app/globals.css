@@ -33,6 +33,36 @@ button, input, textarea, select { font: inherit; }
 a { text-decoration: none; }
 ::selection { background: var(--surface-active); }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* Themed scrollbars — Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) var(--workspace);
+}
+
+/* Themed scrollbars — Chromium / Safari */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: var(--workspace);
+  border-radius: var(--radius-full);
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border: 2px solid var(--workspace);
+  border-radius: var(--radius-full);
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--brand);
+}
+*::-webkit-scrollbar-thumb:active {
+  background: var(--brand-hover);
+}
+*::-webkit-scrollbar-corner {
+  background: var(--workspace);
+}
 .skip-link { position: fixed; z-index: 100; left: var(--space-4); top: var(--space-4); transform: translateY(-200%); border-radius: var(--radius-md); background: var(--surface); padding: var(--space-3) var(--space-4); box-shadow: var(--shadow-2); }
 .skip-link:focus { transform: translateY(0); }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; } }
