@@ -20,12 +20,7 @@ export default function AppearanceSettingsPage() {
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="grid gap-1.5 text-sm">
           <span className="font-medium text-text-primary">Theme</span>
-          <Select
-            aria-label="Theme"
-            disabled
-            defaultValue="light"
-            onValueChange={() => undefined}
-          >
+          <Select aria-label="Theme" disabled defaultValue="light">
             <option value="light">Light</option>
             <option value="dark">Dark</option>
             <option value="system">System</option>
@@ -33,12 +28,7 @@ export default function AppearanceSettingsPage() {
         </label>
         <label className="grid gap-1.5 text-sm">
           <span className="font-medium text-text-primary">Density</span>
-          <Select
-            aria-label="Density"
-            disabled
-            defaultValue="comfortable"
-            onValueChange={() => undefined}
-          >
+          <Select aria-label="Density" disabled defaultValue="comfortable">
             <option value="comfortable">Comfortable</option>
             <option value="compact">Compact</option>
           </Select>
