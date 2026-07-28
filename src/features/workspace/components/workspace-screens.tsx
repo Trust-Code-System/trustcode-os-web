@@ -1,733 +1,142 @@
-import {
-  Activity,
-  CalendarDays,
-  FileText,
-  Filter,
-  Plus,
-  Upload,
-  UsersRound,
-} from "lucide-react";
+"use client";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { Archive, CalendarDays, Check, ExternalLink, Plus, RotateCw, Trash2, UsersRound } from "lucide-react";
 import Link from "next/link";
-
+import { useState, type FormEvent, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Badge,
-  MetricCard,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/data-display";
-import { SearchField, Select } from "@/components/ui/form-controls";
+import { Badge, MetricCard, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/data-display";
+import { Alert, EmptyState, Skeleton } from "@/components/ui/feedback";
+import { FormField, Input, Select, Textarea } from "@/components/ui/form-controls";
 import { PageHeader, SectionHeader } from "@/components/ui/navigation";
+import { Tabs } from "@/components/ui/overlays";
+import { toAppError } from "@/lib/errors/app-error";
 import {
-  activity,
-  documents,
-  meetings,
-  projects,
-  team,
-  type ProjectFixture,
-} from "../data/workspace-fixtures";
+  addProjectMember, cancelMeeting, changeProjectStatus, completeMilestone,
+  createMeeting, createMilestone, createProject, deleteMilestone, inviteUser,
+  listClientOptions, listMeetings, listMilestones, listProjectMembers, listProjects,
+  listUsers, getProject, projectPriorities, projectRoles, projectStatuses,
+  removeProjectMember, setProjectArchived, setUserActive, workspaceKeys,
+  updateMeeting, updateMilestone, updateProject, updateProjectMemberRole, updateUser,
+  type ClientOption, type MeetingView, type ProjectPriority, type ProjectStatus,
+  type MeetingInput, type ProjectInput, type ProjectRole,
+} from "../api/workspace";
 
-const unavailable =
-  "This action will be enabled when its backend contract is implemented.";
+type MutationLike<TVariables> = {
+  mutate: (variables: TVariables) => void;
+  isPending: boolean;
+  error: unknown;
+};
 
 export function DashboardScreen() {
-  return (
-    <>
-      <PageHeader
-        title="Good evening, Ghost"
-        description="Stay on top of your tasks and project progress."
-        actions={
-          <>
-            <Button variant="secondary" size="sm">
-              <CalendarDays aria-hidden className="size-4" />
-              This week
-            </Button>
-            <Button size="sm" disabled title={unavailable}>
-              <Plus aria-hidden className="size-4" />
-              New project
-            </Button>
-          </>
-        }
-      />
-      <div className="grid gap-3 xl:grid-cols-[1.08fr_1fr_1.08fr]">
-        <section className="overflow-hidden rounded-[var(--radius-lg)] bg-brand p-4 text-white shadow-[0_14px_30px_rgb(27_63_174/0.22)]">
-          <p className="text-xs font-medium text-white/85">Active clients</p>
-          <div className="mt-2 flex items-end justify-between gap-3">
-            <p className="text-3xl font-bold tracking-[-0.045em] tabular-nums">
-              148
-            </p>
-            <span className="rounded-full bg-white/14 px-2 py-1 text-[10px] font-semibold text-white">
-              +12% this month
-            </span>
-          </div>
-          <div className="mt-5 grid grid-cols-3 gap-2">
-            {[
-              ["Retainers", "62"],
-              ["Projects", "54"],
-              ["Prospects", "32"],
-            ].map(([label, value]) => (
-              <div
-                key={label}
-                className="rounded-xl bg-white/10 p-2.5 shadow-[inset_0_1px_0_rgb(255_255_255/0.15)]"
-              >
-                <p className="text-[10px] text-white/85">{label}</p>
-                <p className="mt-1 text-sm font-bold tabular-nums">{value}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-        <div className="grid grid-cols-2 gap-3">
-          <DashboardStat label="Active projects" value="32" hint="4 at risk" />
-          <DashboardStat label="Open tasks" value="245" hint="42 in progress" />
-          <DashboardStat label="Meetings" value="8" hint="This week" />
-          <DashboardStat label="Completion" value="72%" hint="124 tasks done" />
-        </div>
-        <Panel
-          title="Delivery throughput"
-          action={
-            <span className="text-[10px] text-text-muted">Last 7 months</span>
-          }
-        >
-          <DeliveryChart />
-        </Panel>
-      </div>
-      <div className="mt-3 grid gap-3 xl:grid-cols-[0.82fr_1.58fr]">
-        <div className="grid gap-3">
-          <Panel title="Project status">
-            <div className="grid gap-3.5">
-              {projects.map((project) => (
-                <Progress
-                  key={project.id}
-                  label={project.name}
-                  value={project.progress}
-                />
-              ))}
-            </div>
-          </Panel>
-          <Panel title="Upcoming deadlines">
-            <ul className="grid gap-2">
-              {projects.map((project) => (
-                <li
-                  key={project.id}
-                  className="flex items-center gap-3 rounded-xl bg-surface-hover/70 p-2.5"
-                >
-                  <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-surface font-mono text-[9px] font-semibold text-brand shadow-[var(--shadow-1)]">
-                    OCT
-                  </span>
-                  <div className="min-w-0">
-                    <p className="truncate text-xs font-semibold">
-                      {project.name}
-                    </p>
-                    <p className="text-[10px] text-text-muted">
-                      {project.deadline}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </Panel>
-        </div>
-        <Panel
-          title="Recent activities"
-          action={
-            <Button variant="secondary" size="sm">
-              View all
-            </Button>
-          }
-        >
-          <ActivityTable />
-        </Panel>
-      </div>
-    </>
-  );
+  const query = useQuery({
+    queryKey: workspaceKeys.dashboard(),
+    queryFn: async ({ signal }) => {
+      const [clients, projects, meetings] = await Promise.all([
+        listClientOptions(signal),
+        listProjects({ archived: false }, signal),
+        listMeetings("upcoming", {}, signal),
+      ]);
+      return { clients, projects, meetings };
+    },
+  });
+  if (query.isLoading) return <ScreenSkeleton title="Dashboard" />;
+  if (query.isError || !query.data) return <ScreenError title="Dashboard" error={query.error} retry={() => query.refetch()} />;
+  const { clients, projects, meetings } = query.data;
+  const activeProjects = projects.filter((project) => project.status === "IN_PROGRESS").length;
+  const completedProjects = projects.filter((project) => project.status === "COMPLETED").length;
+  return <><PageHeader title="Dashboard" description="A live summary assembled from the currently available API modules." /><div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><MetricCard label="Clients" value={clients.filter((client) => client.status === "ACTIVE").length} hint="Active client records" /><MetricCard label="Projects" value={projects.length} hint={`${activeProjects} in progress`} /><MetricCard label="Completed" value={completedProjects} hint="Completed projects" /><MetricCard label="Upcoming meetings" value={meetings.length} hint="Scheduled and not cancelled" /></div><div className="mt-4 grid gap-4 xl:grid-cols-2"><Panel title="Recent projects">{projects.length ? <div className="divide-y">{projects.slice(0, 6).map((project) => <Link key={project.id} href={`/projects/${project.id}`} className="flex items-center justify-between gap-4 py-3 hover:text-brand"><div><p className="text-sm font-medium">{project.name}</p><p className="text-xs text-text-muted">{clientName(clients, project.clientId)}</p></div><Badge tone={projectTone(project.status)}>{label(project.status)}</Badge></Link>)}</div> : <CompactEmpty title="No projects yet" />}</Panel><Panel title="Upcoming meetings">{meetings.length ? <div className="divide-y">{meetings.slice(0, 6).map((meeting) => <div key={meeting.id} className="flex items-center justify-between gap-4 py-3"><div><p className="text-sm font-medium">{meeting.title}</p><p className="text-xs text-text-muted">{format(new Date(meeting.startsAt), "d MMM yyyy, HH:mm")}</p></div><CalendarDays aria-hidden className="size-4 text-brand" /></div>)}</div> : <CompactEmpty title="No upcoming meetings" />}</Panel></div></>;
 }
 
 export function ProjectsScreen() {
-  return (
-    <>
-      <PageHeader
-        title="Projects"
-        description="Track your engineering and delivery progress."
-        actions={
-          <Button size="sm" disabled title={unavailable}>
-            <Plus aria-hidden className="size-4" />
-            Add project
-          </Button>
-        }
-      />
-      <FilterBar placeholder="Search projects..." />
-      <Panel className="overflow-hidden p-0" title="">
-        <ResponsiveProjectList />
-      </Panel>
-    </>
-  );
+  const queryClient = useQueryClient();
+  const [adding, setAdding] = useState(false);
+  const [status, setStatus] = useState<"" | ProjectStatus>("");
+  const [priority, setPriority] = useState<"" | ProjectPriority>("");
+  const filters = { ...(status ? { status } : {}), ...(priority ? { priority } : {}), archived: false };
+  const query = useQuery({ queryKey: workspaceKeys.projects(filters), queryFn: ({ signal }) => Promise.all([listProjects(filters, signal), listClientOptions(signal)]).then(([projects, clients]) => ({ projects, clients })) });
+  const create = useMutation({ mutationFn: createProject, onSuccess: async () => { setAdding(false); await queryClient.invalidateQueries({ queryKey: workspaceKeys.all }); } });
+  return <><PageHeader title="Projects" description="Live projects, priorities, deadlines, and delivery status." actions={<Button size="sm" onClick={() => setAdding((value) => !value)}><Plus aria-hidden className="size-4" />Add project</Button>} />{adding ? <ProjectCreateForm clients={query.data?.clients ?? []} mutation={create} /> : null}<div className="surface-panel mb-3 grid gap-2 p-2.5 sm:grid-cols-2"><Select aria-label="Filter projects by status" value={status} onValueChange={(value) => setStatus(value as "" | ProjectStatus)}><option value="">All statuses</option>{projectStatuses.map((value) => <option key={value} value={value}>{label(value)}</option>)}</Select><Select aria-label="Filter projects by priority" value={priority} onValueChange={(value) => setPriority(value as "" | ProjectPriority)}><option value="">All priorities</option>{projectPriorities.map((value) => <option key={value} value={value}>{label(value)}</option>)}</Select></div>{query.isLoading ? <Skeleton className="h-72" /> : query.isError || !query.data ? <ScreenError title="Projects could not be loaded" error={query.error} retry={() => query.refetch()} compact /> : query.data.projects.length ? <Panel title=""><Table><TableHead><tr><TableHeader>Project</TableHeader><TableHeader>Client</TableHeader><TableHeader>Status</TableHeader><TableHeader>Priority</TableHeader><TableHeader>Due date</TableHeader></tr></TableHead><TableBody>{query.data.projects.map((project) => <TableRow key={project.id}><TableCell><Link href={`/projects/${project.id}`} className="font-medium hover:underline">{project.name}</Link></TableCell><TableCell>{clientName(query.data.clients, project.clientId)}</TableCell><TableCell><Badge tone={projectTone(project.status)}>{label(project.status)}</Badge></TableCell><TableCell>{label(project.priority)}</TableCell><TableCell>{project.dueDate ? format(new Date(project.dueDate), "d MMM yyyy") : "Not set"}</TableCell></TableRow>)}</TableBody></Table></Panel> : <CompactEmpty title="No projects found" />}</>;
 }
 
 export function ProjectWorkspaceScreen({ projectId }: { projectId: string }) {
-  const project =
-    projects.find((item) => item.id === projectId) ?? projects[0]!;
-  return (
-    <>
-      <PageHeader
-        eyebrow={`${project.status} · ${project.priority} priority`}
-        title={project.name}
-        description={`Client: ${project.client}`}
-        actions={
-          <div className="text-right">
-            <p className="font-mono text-[10px] uppercase text-text-muted">
-              Deadline
-            </p>
-            <p className="text-sm font-medium">{project.deadline}</p>
-          </div>
-        }
-      />
-      <div className="mb-4 flex gap-5 overflow-x-auto border-b text-sm">
-        <span className="border-b-2 border-brand pb-3 font-medium">
-          Overview
-        </span>
-        {[
-          "Tasks",
-          "Milestones",
-          "Team",
-          "Meetings",
-          "Documents",
-          "Activity",
-        ].map((tab) => (
-          <span key={tab} className="pb-3 text-text-muted">
-            {tab}
-          </span>
-        ))}
-      </div>
-      <Panel
-        title="Project tasks"
-        action={
-          <Button size="sm" disabled title={unavailable}>
-            <Plus aria-hidden className="size-4" />
-            Add task
-          </Button>
-        }
-      >
-        <Table>
-          <TableHead>
-            <tr>
-              <TableHeader>Task</TableHeader>
-              <TableHeader>Assignee</TableHeader>
-              <TableHeader>Status</TableHeader>
-              <TableHeader>Priority</TableHeader>
-              <TableHeader>Deadline</TableHeader>
-            </tr>
-          </TableHead>
-          <TableBody>
-            {[
-              "Database Schema Design",
-              "API Endpoint Documentation",
-              "Initial Client Kickoff",
-            ].map((task, index) => (
-              <TableRow key={task}>
-                <TableCell className="font-medium">{task}</TableCell>
-                <TableCell>
-                  {["Alex M.", "Sarah J.", "Mike T."][index]}
-                </TableCell>
-                <TableCell>
-                  <Badge tone={index === 2 ? "success" : "info"}>
-                    {["In progress", "To do", "Done"][index]}
-                  </Badge>
-                </TableCell>
-                <TableCell>{index === 0 ? "High" : "Medium"}</TableCell>
-                <TableCell>Oct {12 + index * 3}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Panel>
-    </>
-  );
+  const queryClient = useQueryClient();
+  const query = useQuery({ queryKey: workspaceKeys.project(projectId), queryFn: async ({ signal }) => { const [project, milestones, members, meetings, clients, users] = await Promise.all([getProject(projectId, signal), listMilestones(projectId, signal), listProjectMembers(projectId, signal), listMeetings("all", { projectId }, signal), listClientOptions(signal), listUsers(1, 100, signal).then((result) => result.data)]); return { project, milestones, members, meetings, clients, users }; } });
+  const refresh = () => queryClient.invalidateQueries({ queryKey: workspaceKeys.project(projectId) });
+  const status = useMutation({ mutationFn: (value: ProjectStatus) => changeProjectStatus(projectId, value), onSuccess: refresh });
+  const priorityUpdate = useMutation({ mutationFn: (value: ProjectPriority) => updateProject(projectId, { priority: value }), onSuccess: refresh });
+  const archive = useMutation({ mutationFn: (value: boolean) => setProjectArchived(projectId, value), onSuccess: refresh });
+  const milestoneCreate = useMutation({ mutationFn: (input: { title: string; description?: string; dueDate?: string }) => createMilestone(projectId, input), onSuccess: refresh });
+  const milestoneComplete = useMutation({ mutationFn: (id: string) => completeMilestone(projectId, id), onSuccess: refresh });
+  const milestoneDelete = useMutation({ mutationFn: (id: string) => deleteMilestone(projectId, id), onSuccess: refresh });
+  const milestoneUpdate = useMutation({ mutationFn: (input: { id: string; status: "PENDING" | "IN_PROGRESS" | "COMPLETED" }) => updateMilestone(projectId, input.id, { status: input.status }), onSuccess: refresh });
+  const memberAdd = useMutation({ mutationFn: (input: { userId: string; role: (typeof projectRoles)[number] }) => addProjectMember(projectId, input.userId, input.role), onSuccess: refresh });
+  const memberRemove = useMutation({ mutationFn: (userId: string) => removeProjectMember(projectId, userId), onSuccess: refresh });
+  const memberRole = useMutation({ mutationFn: (input: { userId: string; role: ProjectRole }) => updateProjectMemberRole(projectId, input.userId, input.role), onSuccess: refresh });
+  if (query.isLoading) return <ScreenSkeleton title="Project" />;
+  if (query.isError || !query.data) return <ScreenError title="Project could not be loaded" error={query.error} retry={() => query.refetch()} />;
+  const { project, milestones, members, meetings, clients, users } = query.data;
+  return <><PageHeader eyebrow={`${label(project.status)} · ${label(project.priority)} priority`} title={project.name} description={`${clientName(clients, project.clientId)}${project.description ? ` · ${project.description}` : ""}`} actions={<Button variant={project.archivedAt ? "secondary" : "danger"} loading={archive.isPending} onClick={() => archive.mutate(!project.archivedAt)}><Archive aria-hidden className="size-4" />{project.archivedAt ? "Restore" : "Archive"}</Button>} /><div className="mb-4 grid max-w-xl gap-2 sm:grid-cols-2"><Select aria-label="Project status" value={project.status} disabled={Boolean(project.archivedAt) || status.isPending} onValueChange={(value) => status.mutate(value as ProjectStatus)}>{projectStatuses.map((value) => <option key={value} value={value}>{label(value)}</option>)}</Select><Select aria-label="Project priority" value={project.priority} disabled={Boolean(project.archivedAt) || priorityUpdate.isPending} onValueChange={(value) => priorityUpdate.mutate(value as ProjectPriority)}>{projectPriorities.map((value) => <option key={value} value={value}>{label(value)}</option>)}</Select></div>{status.error || priorityUpdate.error || archive.error ? <Alert variant="danger" title="Project could not be updated">{toAppError(status.error ?? priorityUpdate.error ?? archive.error).message}</Alert> : null}<Tabs defaultValue="milestones" items={[{ value: "milestones", label: `Milestones (${milestones.length})`, content: <MilestonesPanel projectArchived={Boolean(project.archivedAt)} milestones={milestones} createMutation={milestoneCreate} updateMutation={milestoneUpdate} completeMutation={milestoneComplete} deleteMutation={milestoneDelete} /> }, { value: "team", label: `Team (${members.length})`, content: <MembersPanel projectArchived={Boolean(project.archivedAt)} members={members} users={users} addMutation={memberAdd} roleMutation={memberRole} removeMutation={memberRemove} /> }, { value: "meetings", label: `Meetings (${meetings.length})`, content: meetings.length ? <MeetingRows meetings={meetings} clients={clients} /> : <CompactEmpty title="No project meetings" /> }, { value: "tasks", label: "Tasks", content: <EmptyState title="Tasks API not available" description="The current backend project module exposes projects, milestones, and members, but no task controller yet." /> }]} /></>;
 }
 
 export function MeetingsScreen() {
-  const selected = meetings[0]!;
-  return (
-    <>
-      <PageHeader
-        title="Meetings"
-        actions={
-          <Button size="sm" disabled title={unavailable}>
-            <Plus aria-hidden className="size-4" />
-            Schedule meeting
-          </Button>
-        }
-      />
-      <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
-        <Panel title="Upcoming meetings">
-          <div className="grid gap-2">
-            {meetings.map((meeting) => (
-              <article
-                key={meeting.title}
-                className="grid gap-3 rounded-lg border p-4 sm:grid-cols-[1.2fr_1fr_auto]"
-              >
-                <div>
-                  <p className="font-medium">{meeting.title}</p>
-                  <p className="mt-1 text-xs text-text-muted">{meeting.when}</p>
-                </div>
-                <p className="text-sm text-text-secondary">{meeting.client}</p>
-                <Badge tone="info">{meeting.status}</Badge>
-              </article>
-            ))}
-          </div>
-        </Panel>
-        <Panel title={selected.title}>
-          <p className="text-sm text-text-secondary">Tomorrow · 10:00 AM</p>
-          <Button
-            variant="secondary"
-            className="mt-4 w-full"
-            disabled
-            title={unavailable}
-          >
-            Join call
-          </Button>
-          <div className="mt-4 rounded-lg bg-surface-hover p-4">
-            <SectionHeader title="Action items" />
-            <ul className="grid gap-2 text-sm text-text-secondary">
-              <li>Review API migration strategy</li>
-              <li>Finalize cloud vendor selection</li>
-            </ul>
-          </div>
-        </Panel>
-      </div>
-    </>
-  );
-}
-
-export function DocumentsScreen() {
-  return (
-    <>
-      <PageHeader
-        title="Document Center"
-        description="Manage, securely share, and track all agency assets."
-        actions={
-          <>
-            <Button variant="secondary" size="sm" disabled title={unavailable}>
-              New folder
-            </Button>
-            <Button size="sm" disabled title={unavailable}>
-              <Upload aria-hidden className="size-4" />
-              Upload document
-            </Button>
-          </>
-        }
-      />
-      <FilterBar placeholder="Search files, folders, or metadata..." />
-      <Panel className="overflow-hidden p-0" title="">
-        <div className="grid min-h-36 place-items-center border-b border-dashed p-6 text-center">
-          <div>
-            <Upload aria-hidden className="mx-auto size-6 text-brand" />
-            <p className="mt-2 text-sm font-medium">Drag & drop files here</p>
-            <p className="text-xs text-text-muted">
-              Upload becomes available with the document API.
-            </p>
-          </div>
-        </div>
-        <Table>
-          <TableHead>
-            <tr>
-              <TableHeader>Name</TableHeader>
-              <TableHeader>Category</TableHeader>
-              <TableHeader>Client</TableHeader>
-              <TableHeader>Project</TableHeader>
-              <TableHeader>Uploaded by</TableHeader>
-              <TableHeader>Date</TableHeader>
-            </tr>
-          </TableHead>
-          <TableBody>
-            {documents.map((document) => (
-              <TableRow key={document.name}>
-                <TableCell className="font-medium">
-                  <span className="inline-flex items-center gap-2">
-                    <FileText aria-hidden className="size-4 text-brand" />
-                    {document.name}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <Badge>{document.category}</Badge>
-                </TableCell>
-                <TableCell>{document.client}</TableCell>
-                <TableCell>{document.project}</TableCell>
-                <TableCell>{document.owner}</TableCell>
-                <TableCell>{document.date}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Panel>
-    </>
-  );
+  const queryClient = useQueryClient();
+  const [view, setView] = useState<MeetingView>("upcoming");
+  const [adding, setAdding] = useState(false);
+  const query = useQuery({ queryKey: workspaceKeys.meetings(view), queryFn: ({ signal }) => Promise.all([listMeetings(view, {}, signal), listClientOptions(signal), listProjects({ archived: false }, signal)]).then(([meetings, clients, projects]) => ({ meetings, clients, projects })) });
+  const create = useMutation({ mutationFn: createMeeting, onSuccess: async () => { setAdding(false); await queryClient.invalidateQueries({ queryKey: workspaceKeys.all }); } });
+  const cancel = useMutation({ mutationFn: cancelMeeting, onSuccess: () => queryClient.invalidateQueries({ queryKey: workspaceKeys.all }) });
+  const reschedule = useMutation({ mutationFn: ({ id, startsAt }: { id: string; startsAt: string }) => updateMeeting(id, { startsAt }), onSuccess: () => queryClient.invalidateQueries({ queryKey: workspaceKeys.all }) });
+  return <><PageHeader title="Meetings" description="Scheduled, past, and cancelled meetings from the live API." actions={<Button size="sm" onClick={() => setAdding((value) => !value)}><Plus aria-hidden className="size-4" />Schedule meeting</Button>} />{adding ? <MeetingCreateForm clients={query.data?.clients ?? []} projects={query.data?.projects ?? []} mutation={create} /> : null}<div className="mb-3 max-w-48"><Select aria-label="Meeting view" value={view} onValueChange={(value) => setView(value as MeetingView)}>{["all", "upcoming", "past", "cancelled"].map((value) => <option key={value} value={value}>{label(value)}</option>)}</Select></div>{query.isLoading ? <Skeleton className="h-72" /> : query.isError || !query.data ? <ScreenError title="Meetings could not be loaded" error={query.error} retry={() => query.refetch()} compact /> : query.data.meetings.length ? <Panel title=""><MeetingRows meetings={query.data.meetings} clients={query.data.clients} cancel={(id) => cancel.mutate(id)} reschedule={(id, startsAt) => reschedule.mutate({ id, startsAt })} {...(cancel.variables ? { cancellingId: cancel.variables } : {})} /></Panel> : <CompactEmpty title={`No ${view} meetings`} />}{cancel.error || reschedule.error ? <Alert variant="danger" title="Meeting could not be updated">{toAppError(cancel.error ?? reschedule.error).message}</Alert> : null}</>;
 }
 
 export function TeamScreen() {
-  return (
-    <>
-      <PageHeader
-        title="Team"
-        description="Manage organization members and their access roles."
-        actions={
-          <Button size="sm" disabled title={unavailable}>
-            <Plus aria-hidden className="size-4" />
-            Invite member
-          </Button>
-        }
-      />
-      <FilterBar placeholder="Search members..." />
-      <Panel className="overflow-hidden p-0" title="">
-        <Table>
-          <TableHead>
-            <tr>
-              <TableHeader>Member</TableHeader>
-              <TableHeader>Role</TableHeader>
-              <TableHeader>Assigned projects</TableHeader>
-              <TableHeader>Active tasks</TableHeader>
-              <TableHeader>Status</TableHeader>
-            </tr>
-          </TableHead>
-          <TableBody>
-            {team.map((member) => (
-              <TableRow key={member.email}>
-                <TableCell>
-                  <p className="font-medium">{member.name}</p>
-                  <p className="text-xs text-text-muted">{member.email}</p>
-                </TableCell>
-                <TableCell>
-                  <Badge tone={member.role === "Admin" ? "info" : "neutral"}>
-                    {member.role}
-                  </Badge>
-                </TableCell>
-                <TableCell>{member.projects}</TableCell>
-                <TableCell>{member.tasks} tasks</TableCell>
-                <TableCell>
-                  <span className="inline-flex items-center gap-2 text-sm">
-                    <span
-                      className={`size-2 rounded-full ${member.status === "Active" ? "bg-success" : "bg-warning"}`}
-                    />
-                    {member.status}
-                  </span>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Panel>
-    </>
-  );
+  const queryClient = useQueryClient();
+  const [inviting, setInviting] = useState(false);
+  const query = useQuery({ queryKey: workspaceKeys.users(), queryFn: ({ signal }) => listUsers(1, 100, signal) });
+  const invite = useMutation({ mutationFn: inviteUser, onSuccess: async () => { setInviting(false); await queryClient.invalidateQueries({ queryKey: workspaceKeys.users() }); } });
+  const active = useMutation({ mutationFn: ({ id, value }: { id: string; value: boolean }) => setUserActive(id, value), onSuccess: () => queryClient.invalidateQueries({ queryKey: workspaceKeys.users() }) });
+  const roleUpdate = useMutation({ mutationFn: ({ id, role }: { id: string; role: "ADMIN" | "MEMBER" }) => updateUser(id, { role }), onSuccess: () => queryClient.invalidateQueries({ queryKey: workspaceKeys.users() }) });
+  return <><PageHeader title="Team" description="Manage organization members and access roles through the users API." actions={<Button size="sm" onClick={() => setInviting((value) => !value)}><Plus aria-hidden className="size-4" />Invite member</Button>} />{inviting ? <InviteForm mutation={invite} /> : null}{query.isLoading ? <Skeleton className="h-72" /> : query.isError || !query.data ? <ScreenError title="Team could not be loaded" error={query.error} retry={() => query.refetch()} compact /> : query.data.data.length ? <Panel title=""><Table><TableHead><tr><TableHeader>Member</TableHeader><TableHeader>Role</TableHeader><TableHeader>Last login</TableHeader><TableHeader>Status</TableHeader><TableHeader>Action</TableHeader></tr></TableHead><TableBody>{query.data.data.map((user) => <TableRow key={user.id}><TableCell><p className="font-medium">{user.name}</p><p className="text-xs text-text-muted">{user.email}</p></TableCell><TableCell><Select aria-label={`Role for ${user.name}`} value={user.role} disabled={roleUpdate.isPending} onValueChange={(role) => roleUpdate.mutate({ id: user.id, role: role as "ADMIN" | "MEMBER" })}><option value="MEMBER">Member</option><option value="ADMIN">Admin</option></Select></TableCell><TableCell>{user.lastLoginAt ? format(new Date(user.lastLoginAt), "d MMM yyyy, HH:mm") : "Never"}</TableCell><TableCell><Badge tone={user.isActive ? "success" : "warning"}>{user.isActive ? "Active" : "Inactive"}</Badge></TableCell><TableCell><Button size="sm" variant="secondary" loading={active.isPending && active.variables?.id === user.id} onClick={() => active.mutate({ id: user.id, value: !user.isActive })}>{user.isActive ? "Deactivate" : "Activate"}</Button></TableCell></TableRow>)}</TableBody></Table></Panel> : <CompactEmpty title="No team members" />}{active.error || roleUpdate.error ? <Alert variant="danger" title="Team member could not be updated">{toAppError(active.error ?? roleUpdate.error).message}</Alert> : null}</>;
 }
 
-export function ActivityScreen() {
-  return (
-    <>
-      <PageHeader
-        title="Activity Feed"
-        description="Monitor system-wide actions and updates."
-      />
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-4 grid gap-3 sm:grid-cols-[11rem_1fr]">
-          <MetricCard label="Total events" value="1,248" />
-          <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-surface p-3">
-            {["All activity", "Projects", "Documents", "Team"].map(
-              (filter, index) => (
-                <Badge key={filter} tone={index ? "neutral" : "info"}>
-                  {filter}
-                </Badge>
-              ),
-            )}
-            <Button variant="ghost" size="sm" className="ml-auto">
-              <Filter aria-hidden className="size-4" />
-              Filter
-            </Button>
-          </div>
-        </div>
-        <Panel title="">
-          <ol className="grid gap-6">
-            {activity.map((item, index) => (
-              <li key={item.actor} className="flex gap-4">
-                <span className="grid size-9 shrink-0 place-items-center rounded-full bg-surface-active text-brand">
-                  {index === 1 ? (
-                    <FileText className="size-4" />
-                  ) : index === 2 ? (
-                    <UsersRound className="size-4" />
-                  ) : (
-                    <Activity className="size-4" />
-                  )}
-                </span>
-                <div>
-                  <p className="text-sm">
-                    <strong>{item.actor}</strong> {item.action}
-                  </p>
-                  <p className="mt-1 text-xs text-text-secondary">
-                    {item.context}
-                  </p>
-                  <p className="mt-1 font-mono text-[10px] text-text-muted">
-                    {item.time}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ol>
-          <Button
-            variant="secondary"
-            size="sm"
-            className="mx-auto mt-7 flex"
-            disabled
-            title={unavailable}
-          >
-            Load more activity
-          </Button>
-        </Panel>
-      </div>
-    </>
-  );
+export function DocumentsScreen() { return <><PageHeader title="Document Center" description="Document storage is planned but is not present in the current backend build." /><EmptyState title="Documents API not available" description="This screen will connect when the backend adds its document controller and response contract." /></>; }
+export function ActivityScreen() { return <><PageHeader title="Activity Feed" description="The backend records activity internally but does not yet expose a company-wide read endpoint." /><EmptyState title="Activity feed API not available" description="Per-client activity is live on each client page. A unified feed will appear here when /activities is implemented." /></>; }
+
+function ProjectCreateForm({ clients, mutation }: { clients: ClientOption[]; mutation: MutationLike<ProjectInput> }) {
+  const submit = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const data = new FormData(event.currentTarget); mutation.mutate({ name: String(data.get("name") ?? ""), clientId: String(data.get("clientId") ?? ""), ...optionalFields(data, ["description", "startDate", "dueDate"]), priority: String(data.get("priority") ?? "MEDIUM") as ProjectPriority }); };
+  return <ActionForm title="Create project" onSubmit={submit} error={mutation.error} pending={mutation.isPending}><FormField label="Project name" required><Input name="name" required minLength={2} /></FormField><FormField label="Client" required><Select name="clientId" required defaultValue=""><option value="">Select a client</option>{clients.filter((client) => client.status === "ACTIVE").map((client) => <option key={client.id} value={client.id}>{client.name}</option>)}</Select></FormField><FormField label="Priority"><Select name="priority" defaultValue="MEDIUM">{projectPriorities.map((value) => <option key={value} value={value}>{label(value)}</option>)}</Select></FormField><FormField label="Start date"><Input type="date" name="startDate" /></FormField><FormField label="Due date"><Input type="date" name="dueDate" /></FormField><FormField label="Description"><Textarea name="description" /></FormField></ActionForm>;
 }
 
-function Panel({
-  title,
-  action,
-  className = "",
-  children,
-}: {
-  title: string;
-  action?: React.ReactNode;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className={`surface-panel p-3.5 ${className}`}>
-      {title ? <SectionHeader title={title} action={action} /> : null}
-      {children}
-    </section>
-  );
+function MeetingCreateForm({ clients, projects, mutation }: { clients: ClientOption[]; projects: Awaited<ReturnType<typeof listProjects>>; mutation: MutationLike<MeetingInput> }) {
+  const submit = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const data = new FormData(event.currentTarget); const local = String(data.get("startsAt") ?? ""); mutation.mutate({ title: String(data.get("title") ?? ""), startsAt: new Date(local).toISOString(), ...optionalFields(data, ["agenda", "meetingUrl", "clientId", "projectId"]) }); };
+  return <ActionForm title="Schedule meeting" onSubmit={submit} error={mutation.error} pending={mutation.isPending}><FormField label="Title" required><Input name="title" required minLength={2} /></FormField><FormField label="Start" required><Input type="datetime-local" name="startsAt" required /></FormField><FormField label="Client"><Select name="clientId" defaultValue=""><option value="">Internal meeting</option>{clients.filter((client) => client.status === "ACTIVE").map((client) => <option key={client.id} value={client.id}>{client.name}</option>)}</Select></FormField><FormField label="Project"><Select name="projectId" defaultValue=""><option value="">No project</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</Select></FormField><FormField label="Meeting URL"><Input type="url" name="meetingUrl" placeholder="https://meet.example.com/..." /></FormField><FormField label="Agenda"><Textarea name="agenda" /></FormField></ActionForm>;
 }
-function FilterBar({ placeholder }: { placeholder: string }) {
-  return (
-    <section
-      aria-label="Filters"
-      className="surface-panel mb-3 flex flex-wrap gap-2 p-2.5"
-    >
-      <SearchField placeholder={placeholder} className="min-w-52 flex-1" />
-      <Select aria-label="Status filter" className="w-auto min-w-32">
-        <option>All statuses</option>
-      </Select>
-      <Button variant="secondary">
-        <Filter aria-hidden className="size-4" />
-        More filters
-      </Button>
-    </section>
-  );
+
+function InviteForm({ mutation }: { mutation: MutationLike<{ name: string; email: string; role: "ADMIN" | "MEMBER" }> }) { const submit = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const data = new FormData(event.currentTarget); mutation.mutate({ name: String(data.get("name") ?? ""), email: String(data.get("email") ?? ""), role: String(data.get("role") ?? "MEMBER") as "ADMIN" | "MEMBER" }); }; return <ActionForm title="Invite team member" onSubmit={submit} error={mutation.error} pending={mutation.isPending}><FormField label="Name" required><Input name="name" required minLength={2} /></FormField><FormField label="Email" required><Input name="email" type="email" required /></FormField><FormField label="Role"><Select name="role" defaultValue="MEMBER"><option value="MEMBER">Member</option><option value="ADMIN">Admin</option></Select></FormField></ActionForm>; }
+
+function MilestonesPanel({ projectArchived, milestones, createMutation, updateMutation, completeMutation, deleteMutation }: { projectArchived: boolean; milestones: Awaited<ReturnType<typeof listMilestones>>; createMutation: MutationLike<{ title: string; description?: string; dueDate?: string }>; updateMutation: MutationLike<{ id: string; status: "PENDING" | "IN_PROGRESS" | "COMPLETED" }>; completeMutation: MutationLike<string>; deleteMutation: MutationLike<string> }) {
+  const submit = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const data = new FormData(event.currentTarget); createMutation.mutate({ title: String(data.get("title") ?? ""), ...optionalFields(data, ["description", "dueDate"]) }); };
+  return <div className="grid gap-4"><form onSubmit={submit} className="flex flex-wrap gap-2"><Input name="title" required minLength={2} placeholder="New milestone" className="min-w-56 flex-1" /><Input name="dueDate" type="date" aria-label="Milestone due date" className="w-auto" /><Button type="submit" disabled={projectArchived} loading={createMutation.isPending}><Plus aria-hidden className="size-4" />Add</Button></form>{milestones.length ? <div className="divide-y rounded-[var(--radius-md)] border">{milestones.map((milestone) => <div key={milestone.id} className="flex flex-wrap items-center justify-between gap-3 p-4"><div><p className="font-medium">{milestone.title}</p><p className="text-xs text-text-muted">{milestone.dueDate ? `Due ${format(new Date(milestone.dueDate), "d MMM yyyy")}` : "No due date"}</p></div><div className="flex items-center gap-2"><Select aria-label={`Status for ${milestone.title}`} value={milestone.status} disabled={projectArchived || updateMutation.isPending} onValueChange={(value) => updateMutation.mutate({ id: milestone.id, status: value as "PENDING" | "IN_PROGRESS" | "COMPLETED" })}><option value="PENDING">Pending</option><option value="IN_PROGRESS">In progress</option><option value="COMPLETED">Completed</option></Select>{milestone.status !== "COMPLETED" ? <Button size="sm" variant="secondary" onClick={() => completeMutation.mutate(milestone.id)}><Check aria-hidden className="size-4" />Complete</Button> : null}<Button size="sm" variant="ghost" onClick={() => deleteMutation.mutate(milestone.id)}><Trash2 aria-hidden className="size-4" />Delete</Button></div></div>)}</div> : <CompactEmpty title="No milestones" />}</div>;
 }
-function Progress({ label, value }: { label: string; value: number }) {
-  return (
-    <div>
-      <div className="mb-2 flex justify-between gap-4 text-xs">
-        <span>{label}</span>
-        <span className="font-mono text-text-muted">{value}%</span>
-      </div>
-      <div className="h-2 rounded-full bg-surface-active">
-        <div
-          className="h-full rounded-full bg-brand"
-          style={{ width: `${value}%` }}
-        />
-      </div>
-    </div>
-  );
+
+function MembersPanel({ projectArchived, members, users, addMutation, roleMutation, removeMutation }: { projectArchived: boolean; members: Awaited<ReturnType<typeof listProjectMembers>>; users: Awaited<ReturnType<typeof listUsers>>["data"]; addMutation: MutationLike<{ userId: string; role: ProjectRole }>; roleMutation: MutationLike<{ userId: string; role: ProjectRole }>; removeMutation: MutationLike<string> }) {
+  const submit = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const data = new FormData(event.currentTarget); addMutation.mutate({ userId: String(data.get("userId") ?? ""), role: String(data.get("role") ?? "MEMBER") as ProjectRole }); };
+  const existing = new Set(members.map((member) => member.userId));
+  return <div className="grid gap-4"><form onSubmit={submit} className="flex flex-wrap gap-2"><Select name="userId" required defaultValue="" className="min-w-56"><option value="">Select team member</option>{users.filter((user) => user.isActive && !existing.has(user.id)).map((user) => <option key={user.id} value={user.id}>{user.name}</option>)}</Select><Select name="role" defaultValue="MEMBER">{projectRoles.map((role) => <option key={role} value={role}>{label(role)}</option>)}</Select><Button type="submit" disabled={projectArchived} loading={addMutation.isPending}><UsersRound aria-hidden className="size-4" />Add member</Button></form>{members.length ? <div className="divide-y rounded-[var(--radius-md)] border">{members.map((member) => <div key={member.id} className="flex items-center justify-between gap-4 p-4"><div><p className="font-medium">{member.user.name}</p><p className="text-xs text-text-muted">{member.user.email}</p></div><div className="flex items-center gap-2"><Select aria-label={`Project role for ${member.user.name}`} value={member.role} disabled={projectArchived || roleMutation.isPending} onValueChange={(role) => roleMutation.mutate({ userId: member.userId, role: role as ProjectRole })}>{projectRoles.map((role) => <option key={role} value={role}>{label(role)}</option>)}</Select><Button size="sm" variant="ghost" disabled={member.role === "OWNER"} onClick={() => removeMutation.mutate(member.userId)}><Trash2 aria-hidden className="size-4" />Remove</Button></div></div>)}</div> : <CompactEmpty title="No project members" />}</div>;
 }
-function ResponsiveProjectList() {
-  return (
-    <>
-      <div className="hidden md:block">
-        <Table>
-          <TableHead>
-            <tr>
-              <TableHeader>Project name</TableHeader>
-              <TableHeader>Client</TableHeader>
-              <TableHeader>Status</TableHeader>
-              <TableHeader>Priority</TableHeader>
-              <TableHeader>Progress</TableHeader>
-              <TableHeader>Deadline</TableHeader>
-            </tr>
-          </TableHead>
-          <TableBody>
-            {projects.map((project) => (
-              <TableRow key={project.id}>
-                <TableCell>
-                  <Link
-                    className="font-medium hover:underline"
-                    href={`/projects/${project.id}`}
-                  >
-                    {project.name}
-                  </Link>
-                  <p className="font-mono text-[10px] text-text-muted">
-                    PRJ-{project.id.slice(0, 4).toUpperCase()}
-                  </p>
-                </TableCell>
-                <TableCell>{project.client}</TableCell>
-                <TableCell>
-                  <Badge tone={projectTone(project)}>{project.status}</Badge>
-                </TableCell>
-                <TableCell>{project.priority}</TableCell>
-                <TableCell className="min-w-40">
-                  <Progress label="" value={project.progress} />
-                </TableCell>
-                <TableCell>{project.deadline}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-      <div className="divide-y md:hidden">
-        {projects.map((project) => (
-          <Link
-            key={project.id}
-            href={`/projects/${project.id}`}
-            className="block p-4"
-          >
-            <div className="flex justify-between gap-3">
-              <p className="font-medium">{project.name}</p>
-              <Badge tone={projectTone(project)}>{project.status}</Badge>
-            </div>
-            <p className="mt-1 text-xs text-text-muted">
-              {project.client} · {project.deadline}
-            </p>
-            <div className="mt-4">
-              <Progress label="Progress" value={project.progress} />
-            </div>
-          </Link>
-        ))}
-      </div>
-    </>
-  );
+
+function MeetingRows({ meetings, clients, cancel, cancellingId, reschedule }: { meetings: Awaited<ReturnType<typeof listMeetings>>; clients: ClientOption[]; cancel?: (id: string) => void; cancellingId?: string; reschedule?: (id: string, startsAt: string) => void }) {
+  return <div className="divide-y">{meetings.map((meeting) => <article key={meeting.id} className="grid gap-3 py-4 sm:grid-cols-[1fr_auto]"><div><p className="font-medium">{meeting.title}</p><p className="mt-1 text-xs text-text-muted">{format(new Date(meeting.startsAt), "d MMM yyyy, HH:mm")} · {meeting.clientId ? clientName(clients, meeting.clientId) : "Internal"}</p>{meeting.agenda ? <p className="mt-2 text-sm text-text-secondary">{meeting.agenda}</p> : null}{reschedule && !meeting.cancelledAt && new Date(meeting.startsAt) > new Date() ? <form className="mt-3 flex flex-wrap gap-2" onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); reschedule(meeting.id, new Date(String(data.get("startsAt"))).toISOString()); }}><Input type="datetime-local" name="startsAt" aria-label={`Start time for ${meeting.title}`} defaultValue={format(new Date(meeting.startsAt), "yyyy-MM-dd'T'HH:mm")} className="w-auto" /><Button type="submit" size="sm" variant="secondary">Save time</Button></form> : null}</div><div className="flex items-center gap-2"><Badge tone={meeting.cancelledAt ? "danger" : "info"}>{meeting.cancelledAt ? "Cancelled" : "Scheduled"}</Badge>{meeting.meetingUrl && !meeting.cancelledAt ? <a href={meeting.meetingUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-8 items-center gap-1 rounded-md border px-3 text-xs"><ExternalLink aria-hidden className="size-3" />Join</a> : null}{cancel && !meeting.cancelledAt && new Date(meeting.startsAt) > new Date() ? <Button size="sm" variant="secondary" loading={cancellingId === meeting.id} onClick={() => cancel(meeting.id)}>Cancel</Button> : null}</div></article>)}</div>;
 }
-function projectTone(
-  project: ProjectFixture,
-): "success" | "warning" | "danger" {
-  return project.status === "Active"
-    ? "success"
-    : project.status === "Delayed"
-      ? "danger"
-      : "warning";
-}
-function DashboardStat({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: string;
-  hint: string;
-}) {
-  return (
-    <div className="surface-panel p-3.5">
-      <p className="text-[11px] font-medium text-text-secondary">{label}</p>
-      <p className="mt-2 text-xl font-bold tracking-[-0.04em] tabular-nums">
-        {value}
-      </p>
-      <p className="mt-1 text-[10px] text-text-muted">{hint}</p>
-    </div>
-  );
-}
-function DeliveryChart() {
-  const values = [
-    [44, 24],
-    [58, 34],
-    [51, 29],
-    [63, 39],
-    [72, 45],
-    [57, 31],
-    [48, 27],
-  ];
-  return (
-    <div>
-      <div className="flex h-32 items-end justify-between gap-2 border-b border-border px-1">
-        {values.map(([delivered, pending], index) => (
-          <div
-            key={index}
-            className="flex h-full flex-1 items-end justify-center gap-1"
-          >
-            <span
-              className="w-2.5 rounded-t-md bg-brand"
-              style={{ height: `${delivered}%` }}
-            />
-            <span
-              className="w-2.5 rounded-t-md bg-text-primary/82"
-              style={{ height: `${pending}%` }}
-            />
-          </div>
-        ))}
-      </div>
-      <div className="mt-2 grid grid-cols-7 text-center font-mono text-[8px] text-text-muted">
-        {["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"].map((month) => (
-          <span key={month}>{month}</span>
-        ))}
-      </div>
-      <div className="mt-3 flex gap-4 text-[10px] text-text-muted">
-        <span className="flex items-center gap-1.5">
-          <i className="size-2 rounded-sm bg-brand" />
-          Delivered
-        </span>
-        <span className="flex items-center gap-1.5">
-          <i className="size-2 rounded-sm bg-text-primary/82" />
-          In review
-        </span>
-      </div>
-    </div>
-  );
-}
-function ActivityTable() {
-  return (
-    <>
-      <div className="hidden sm:block">
-        <Table>
-          <TableHead>
-            <tr>
-              <TableHeader>Activity</TableHeader>
-              <TableHeader>Context</TableHeader>
-              <TableHeader>Owner</TableHeader>
-              <TableHeader>When</TableHeader>
-            </tr>
-          </TableHead>
-          <TableBody>
-            {activity.map((item) => (
-              <TableRow key={item.actor}>
-                <TableCell className="font-semibold">{item.action}</TableCell>
-                <TableCell className="text-text-secondary">
-                  {item.context}
-                </TableCell>
-                <TableCell>{item.actor}</TableCell>
-                <TableCell className="font-mono text-[10px] text-text-muted">
-                  {item.time}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-      <ol className="divide-y divide-border sm:hidden">
-        {activity.map((item) => (
-          <li key={item.actor} className="py-3 first:pt-0 last:pb-0">
-            <div className="flex items-start justify-between gap-3">
-              <p className="text-xs font-semibold leading-5">{item.action}</p>
-              <span className="shrink-0 font-mono text-[9px] text-text-muted">
-                {item.time}
-              </span>
-            </div>
-            <p className="mt-0.5 text-[11px] leading-4 text-text-secondary">
-              {item.context}
-            </p>
-            <p className="mt-1 text-[10px] font-medium text-brand">
-              {item.actor}
-            </p>
-          </li>
-        ))}
-      </ol>
-    </>
-  );
-}
+
+function ActionForm({ title, onSubmit, error, pending, children }: { title: string; onSubmit: (event: FormEvent<HTMLFormElement>) => void; error: unknown; pending: boolean; children: ReactNode }) { return <Panel title={title} className="mb-4"><form onSubmit={onSubmit} className="grid gap-3 sm:grid-cols-2">{children}<div className="sm:col-span-2"><Button type="submit" loading={pending}>Save</Button></div>{error ? <div className="sm:col-span-2"><Alert variant="danger" title="Could not save">{toAppError(error).message}</Alert></div> : null}</form></Panel>; }
+function Panel({ title, className = "", children }: { title: string; className?: string; children: ReactNode }) { return <section className={`surface-panel p-4 ${className}`}>{title ? <SectionHeader title={title} /> : null}{children}</section>; }
+function CompactEmpty({ title }: { title: string }) { return <EmptyState title={title} description="No matching records were returned by the backend." />; }
+function ScreenSkeleton({ title }: { title: string }) { return <><PageHeader title={title} /><Skeleton className="h-72" /></>; }
+function ScreenError({ title, error, retry, compact = false }: { title: string; error: unknown; retry: () => unknown; compact?: boolean }) { const content = <Alert variant="danger" title={title} action={<Button size="sm" variant="secondary" onClick={() => void retry()}><RotateCw aria-hidden className="size-4" />Retry</Button>}>{toAppError(error).message}</Alert>; return compact ? content : <><PageHeader title={title} />{content}</>; }
+function clientName(clients: ClientOption[], id: string) { return clients.find((client) => client.id === id)?.name ?? "Unknown client"; }
+function label(value: string) { return value.toLowerCase().replaceAll("_", " ").replace(/^./, (letter) => letter.toUpperCase()); }
+function projectTone(status: ProjectStatus): "success" | "warning" | "info" { return status === "COMPLETED" ? "success" : status === "ON_HOLD" ? "warning" : "info"; }
+function optionalFields(data: FormData, keys: string[]) { return Object.fromEntries(keys.flatMap((key) => { const value = String(data.get(key) ?? "").trim(); return value ? [[key, key.toLowerCase().includes("date") ? new Date(value).toISOString() : value]] : []; })); }

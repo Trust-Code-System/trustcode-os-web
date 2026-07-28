@@ -19,10 +19,14 @@ const cookieOptions = {
 
 export async function setSession(input: { user: SessionUser; accessToken?: string; refreshToken?: string; mock?: boolean }) {
   const store = await cookies();
-  if (input.accessToken) store.set(sessionCookies.access, input.accessToken, { ...cookieOptions, maxAge: 15 * 60 });
-  if (input.refreshToken) store.set(sessionCookies.refresh, input.refreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 });
+  if (input.accessToken && input.refreshToken) setTokenCookies(store, input.accessToken, input.refreshToken);
+  else if (input.accessToken) store.set(sessionCookies.access, input.accessToken, { ...cookieOptions, maxAge: 15 * 60 });
   if (input.mock) store.set(sessionCookies.mock, "active", { ...cookieOptions, maxAge: 8 * 60 * 60 });
   store.set(sessionCookies.user, Buffer.from(JSON.stringify(input.user)).toString("base64url"), { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 });
+}
+
+export async function setSessionTokens(accessToken: string, refreshToken: string) {
+  setTokenCookies(await cookies(), accessToken, refreshToken);
 }
 
 export async function readSessionUser(): Promise<SessionUser | null> {
@@ -40,4 +44,9 @@ export async function readSessionUser(): Promise<SessionUser | null> {
 export async function clearSession() {
   const store = await cookies();
   for (const name of Object.values(sessionCookies)) store.delete(name);
+}
+
+function setTokenCookies(store: Awaited<ReturnType<typeof cookies>>, accessToken: string, refreshToken: string) {
+  store.set(sessionCookies.access, accessToken, { ...cookieOptions, maxAge: 15 * 60 });
+  store.set(sessionCookies.refresh, refreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 });
 }

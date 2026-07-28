@@ -1,12 +1,8 @@
 # Known Gaps
 
-- Client endpoints, DTOs, persistence model, roles, mutation rules, and relationship shapes are not implemented in the backend; the frontend contract is provisional.
-- Backend auth uses JSON refresh tokens. The frontend BFF mitigates browser exposure, but production cookie/CSRF policy needs deployment-domain review.
-- `/auth/me` does not return the user's name; UI falls back to email.
-- Team, Projects, Project Workspace, Meetings, Documents, Activity, Dashboard, and Settings now have approved visual layouts backed by typed presentation fixtures; their write/integration workflows remain unimplemented.
-- Create/edit/archive client actions are intentionally non-functional until backend mutation contracts are confirmed.
-- Client contacts, notes, projects, meetings, documents, and activity are display-only mock aggregates in the reference detail page.
-- The approved visual design is integrated. Dashboard metrics and its CSS completion ring are presentation-only; live aggregation and charting remain deferred.
-- Stitch supplied desktop screens only. Tablet and mobile views are system-derived responsive adaptations verified at 320, 768, and 1280 pixels.
-- No separate Tasks screen or final notification workflow was supplied in Stitch; those remain route-level or interaction-level gaps.
-- Full multi-browser/device assistive-technology testing remains an ongoing release activity.
+- Documents, tasks, notifications, unified activity, and backend-computed dashboard analytics do not yet have backend controllers.
+- Profile editing and profile-photo endpoints do not exist. Profile identity is read-only in live mode; the photo workflow remains available only in explicit mock mode.
+- The current UI exposes the backend's main create/read/update/lifecycle paths. Full-field editors for every nested record can be expanded as those workflows are finalized.
+- `/auth/me` does not return the user's name, so the session retains the name returned at login.
+- Backend client list search and sort are not implemented. The frontend sends only the supported status, stage, page, and pageSize query keys.
+- Production frontend/API domains and the final CSRF/cookie policy still need deployment review.

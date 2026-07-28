@@ -9,7 +9,8 @@ test.beforeEach(async ({ page }) => {
   expect((await response).ok()).toBe(true);
 });
 
-test("shared selects replace native dropdowns and support keyboard selection", async ({ page }) => {
+test("shared selects replace native dropdowns and support keyboard selection", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name.includes("mobile"), "desktop project owns physical-keyboard behavior");
   await page.goto("/clients");
   await expect(page.locator("select")).toHaveCount(0);
 

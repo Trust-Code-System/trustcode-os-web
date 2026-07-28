@@ -1,6 +1,17 @@
 # Frontend Handoff
 
-Last updated: 2026-07-13
+Last updated: 2026-07-28
+
+## Live API integration update
+
+- Re-audited the backend at commit `4fc7018a704af01396c9cbcf50715a6fa0584927` without modifying it.
+- Replaced provisional client fields and unsupported query parameters with the current client/contact DTOs.
+- Connected client create/edit/stage/archive/restore, contact create/delete, and composed live detail data.
+- Replaced workspace fixtures with live dashboard, projects, milestones, members, meetings, and team-user data and primary mutations.
+- Removed fictional documents/activity/task data; these routes now describe the exact missing backend capability.
+- Added transparent rotating refresh and one-time request retry to the HTTP-only-cookie BFF.
+- Switched `.env.example` and the environment default to live mode; mock mode is now explicit.
+- Updated MSW data to mirror current backend DTOs so the same feature adapters remain testable in isolation.
 
 ## Completed
 

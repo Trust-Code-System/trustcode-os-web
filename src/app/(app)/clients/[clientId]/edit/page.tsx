@@ -1,2 +1,6 @@
-import { PlaceholderPage } from "@/components/feedback/placeholder-page";
-export default function EditClientPage() { return <PlaceholderPage title="Edit client" description="Client editing is deferred until the backend mutation DTO and conflict behavior are confirmed." />; }
+import { ClientForm } from "@/features/clients/components/client-form";
+
+export default async function EditClientPage({ params }: { params: Promise<{ clientId: string }> }) {
+  const { clientId } = await params;
+  return <ClientForm clientId={clientId} />;
+}

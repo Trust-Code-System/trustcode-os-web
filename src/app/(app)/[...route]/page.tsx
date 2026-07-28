@@ -7,12 +7,12 @@ import { ActivityScreen, DashboardScreen, DocumentsScreen, MeetingsScreen, Proje
 import { readSessionUser } from "@/lib/auth/session";
 
 const moduleDescriptions: Record<string, { title: string; description: string }> = {
-  dashboard: { title: "Dashboard", description: "Aggregation will be implemented after operational module APIs are stable." },
-  projects: { title: "Projects", description: "Project, task, and milestone workflows are deferred for this session." },
-  meetings: { title: "Meetings", description: "Meeting scheduling and records are deferred for this session." },
-  documents: { title: "Documents", description: "Document storage workflows are deferred for this session." },
-  activity: { title: "Activity", description: "The unified activity feed awaits supported backend read contracts." },
-  team: { title: "Team", description: "Team administration endpoints exist, but their UI is outside this session boundary." },
+  dashboard: { title: "Dashboard", description: "Live operational summary." },
+  projects: { title: "Projects", description: "Projects, milestones, and members." },
+  meetings: { title: "Meetings", description: "Meeting scheduling and records." },
+  documents: { title: "Documents", description: "Awaiting a backend document controller." },
+  activity: { title: "Activity", description: "Awaiting a unified backend activity endpoint." },
+  team: { title: "Team", description: "Team administration." },
 };
 
 export default async function DeferredRoutePage({ params }: { params: Promise<{ route: string[] }> }) {

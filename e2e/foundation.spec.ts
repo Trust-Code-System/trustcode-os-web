@@ -8,13 +8,11 @@ test("protected routes return to the intended page after mock login", async ({ p
   await expect(page.getByRole("heading", { level: 1, name: "Clients" })).toBeVisible();
 });
 
-test("client list search is URL-backed and detail is usable", async ({ page }) => {
+test("client list and detail use the backend-shaped contract", async ({ page }) => {
   await page.goto("/login");
   await submitLogin(page);
   await expect(page).toHaveURL(/\/dashboard/);
   await page.goto("/clients");
-  await page.getByRole("searchbox", { name: "Search clients" }).fill("Northstar");
-  await expect(page).toHaveURL(/q=Northstar/);
   await expect(page.getByRole("link", { name: /Northstar Logistics/ }).first()).toBeVisible();
   await page.getByRole("link", { name: /Northstar Logistics/ }).first().click();
   await expect(page.getByRole("heading", { level: 1, name: "Northstar Logistics" })).toBeVisible();
