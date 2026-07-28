@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import type { ApiEnvelope } from "@/lib/api/types";
 import type { SessionUser } from "@/features/auth/types/auth";
-import { clearSession, readSessionUser, sessionCookies, setSession } from "@/lib/auth/session";
+import { clearSession, readSessionUser, sessionCookies, setSession, setSessionTokens } from "@/lib/auth/session";
 
 type Context = { params: Promise<{ action: string }> };
 type BackendLogin = { user: SessionUser; tokens: { accessToken: string; refreshToken: string } };
@@ -28,11 +28,22 @@ export async function GET(_request: NextRequest, context: Context) {
   const store = await import("next/headers").then(({ cookies }) => cookies());
   const accessToken = store.get(sessionCookies.access)?.value;
   if (!accessToken) return failure(401, "UNAUTHORIZED", "Your session has expired. Please sign in again.");
-  const upstream = await backendFetch<SessionUser>("me", { headers: { Authorization: `Bearer ${accessToken}` } });
+  let upstream = await backendFetch<SessionUser>("me", { headers: { Authorization: `Bearer ${accessToken}` } });
+  if (upstream.response.status === 401) {
+    const refreshToken = store.get(sessionCookies.refresh)?.value;
+    if (refreshToken) {
+      const refreshed = await backendFetch<{ accessToken: string; refreshToken: string }>("refresh", { method: "POST", body: JSON.stringify({ refreshToken }) });
+      if (refreshed.response.ok && refreshed.body.ok) {
+        await setSessionTokens(refreshed.body.data.accessToken, refreshed.body.data.refreshToken);
+        upstream = await backendFetch<SessionUser>("me", { headers: { Authorization: `Bearer ${refreshed.body.data.accessToken}` } });
+      }
+    }
+  }
   if (upstream.response.ok && upstream.body.ok) {
     const previous = await readSessionUser();
     await setSession({ user: { ...upstream.body.data, ...(previous?.name ? { name: previous.name } : {}) }, accessToken });
   }
+  if (upstream.response.status === 401) await clearSession();
   return NextResponse.json(upstream.body, { status: upstream.response.status });
 }
 
@@ -94,7 +105,7 @@ async function safeJson(request: NextRequest): Promise<unknown> {
   try { return await request.json(); } catch { return {}; }
 }
 
-function mockMode() { return process.env.NEXT_PUBLIC_USE_MOCKS !== "false"; }
+function mockMode() { return process.env.NEXT_PUBLIC_USE_MOCKS === "true"; }
 function success<T>(data: T) { return NextResponse.json({ ok: true as const, data }); }
 function failure(status: number, code: string, message: string, fields?: Record<string, string[] | undefined>) {
   const cleanFields = fields ? Object.fromEntries(Object.entries(fields).filter((entry): entry is [string, string[]] => Array.isArray(entry[1]))) : undefined;

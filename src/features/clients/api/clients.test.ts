@@ -5,11 +5,11 @@ import { server } from "@/mocks/server";
 import { getClient, listClients } from "./clients";
 
 describe("Client CRM service", () => {
-  it("uses the network boundary for search and pagination", async () => {
-    const result = await listClients({ q: "Northstar", status: "", pipeline: "", sort: "name-asc", page: 1, pageSize: 8 });
-    expect(result.items).toHaveLength(1);
+  it("uses the network boundary for backend filters and pagination", async () => {
+    const result = await listClients({ status: "ACTIVE", stage: "LEAD", page: 1, pageSize: 20 });
+    expect(result.items.length).toBeGreaterThan(0);
     expect(result.items[0]?.name).toBe("Northstar Logistics");
-    expect(result.meta.total).toBe(1);
+    expect(result.meta.total).toBe(result.items.length);
   });
 
   it("parses the detail aggregate", async () => {

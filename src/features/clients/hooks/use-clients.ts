@@ -12,5 +12,10 @@ export const clientKeys = {
   detail: (clientId: string) => [...clientKeys.details(), clientId] as const,
 };
 
-export function useClients(filters: ClientListFilters) { return useQuery({ queryKey: clientKeys.list(filters), queryFn: ({ signal }) => listClients(filters, signal), placeholderData: keepPreviousData }); }
-export function useClient(clientId: string) { return useQuery({ queryKey: clientKeys.detail(clientId), queryFn: ({ signal }) => getClient(clientId, signal) }); }
+export function useClients(filters: ClientListFilters) {
+  return useQuery({ queryKey: clientKeys.list(filters), queryFn: ({ signal }) => listClients(filters, signal), placeholderData: keepPreviousData });
+}
+
+export function useClient(clientId: string) {
+  return useQuery({ queryKey: clientKeys.detail(clientId), queryFn: ({ signal }) => getClient(clientId, signal), enabled: Boolean(clientId) });
+}

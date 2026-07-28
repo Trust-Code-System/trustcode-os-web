@@ -4,11 +4,11 @@ import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 
 const routes = [
-  ["dashboard", "/dashboard", "Good evening, Ghost"],
+  ["dashboard", "/dashboard", "Dashboard"],
   ["clients", "/clients", "Clients"],
   ["client-profile", "/clients/northstar-logistics", "Northstar Logistics"],
   ["projects", "/projects", "Projects"],
-  ["project-workspace", "/projects/core-api-refactor", "Core API Refactor"],
+  ["project-workspace", "/projects/northstar-logistics-project", "Northstar Logistics delivery programme"],
   ["meetings", "/meetings", "Meetings"],
   ["documents", "/documents", "Document Center"],
   ["team", "/team", "Team"],

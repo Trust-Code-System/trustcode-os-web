@@ -9,7 +9,7 @@ test("application shell owns the viewport and only main content scrolls", async 
 
   for (const viewport of [{ width: 1280, height: 600 }, { width: 768, height: 600 }, { width: 320, height: 568 }]) {
     await page.setViewportSize(viewport);
-    await page.goto("/dashboard");
+    await page.goto("/clients");
 
     const header = page.locator(".app-frame > div > header");
     const main = page.locator("#main-content");

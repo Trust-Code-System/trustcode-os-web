@@ -31,7 +31,14 @@ function ProfileSettingsPanel({ user }: { user: SessionUser }) {
         <p className="mb-5 text-sm text-text-secondary">
           Update your account profile information and email address.
         </p>
-        <ProfilePhotoManager user={user} />
+        {process.env.NEXT_PUBLIC_USE_MOCKS === "true" ? (
+          <ProfilePhotoManager user={user} />
+        ) : (
+          <section className="mb-5 border-b pb-5" aria-labelledby="profile-photo-heading">
+            <h3 id="profile-photo-heading" className="text-sm font-semibold">Profile photo</h3>
+            <p className="mt-1 text-xs text-text-secondary">Profile-photo upload is unavailable because the current backend does not expose a profile avatar endpoint.</p>
+          </section>
+        )}
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="First name" value={firstName} />
           <Field label="Last name" value={lastName} />
