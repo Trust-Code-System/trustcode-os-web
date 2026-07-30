@@ -26,7 +26,9 @@ export type MeetingInput = { title: string; startsAt: string; agenda?: string; m
 export type TeamUser = { id: string; email: string; name: string; role: "ADMIN" | "MEMBER"; isActive: boolean; lastLoginAt: string | null; emailVerifiedAt: string | null; createdAt: string };
 export const invitationStatuses = ["PENDING", "ACCEPTED", "REVOKED", "EXPIRED"] as const;
 export type InvitationStatus = (typeof invitationStatuses)[number];
-export type EmailDeliveryStatus = "PENDING" | "SENT" | "DELIVERED" | "BOUNCED" | "COMPLAINED" | "FAILED";
+// Mirrors the backend EmailDeliveryStatus enum, which tracks Resend webhook events.
+export const emailDeliveryStatuses = ["PENDING", "SENDING", "SUBMITTED", "DELIVERED", "DELAYED", "FAILED", "BOUNCED", "SUPPRESSED", "COMPLAINED"] as const;
+export type EmailDeliveryStatus = (typeof emailDeliveryStatuses)[number];
 export type TeamInvitation = {
   id: string; email: string; name: string; role: "ADMIN" | "MEMBER";
   status: InvitationStatus; emailStatus: EmailDeliveryStatus; emailAttemptCount: number;
