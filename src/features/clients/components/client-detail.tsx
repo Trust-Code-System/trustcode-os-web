@@ -12,15 +12,16 @@ import { Checkbox, FormField, Input, Select } from "@/components/ui/form-control
 import { Breadcrumb, PageHeader, SectionHeader } from "@/components/ui/navigation";
 import { Tabs } from "@/components/ui/overlays";
 import { toAppError } from "@/lib/errors/app-error";
+import { refreshAppData } from "@/lib/query/cache";
 import { changeClientStage, createContact, deleteContact, setClientArchived, updateContact } from "../api/clients";
-import { clientKeys, useClient } from "../hooks/use-clients";
+import { useClient } from "../hooks/use-clients";
 import { clientStages, type ClientDetail as ClientDetailType, type ClientStatus } from "../types/client";
 
 export function ClientDetail({ clientId }: { clientId: string }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const query = useClient(clientId);
-  const refresh = () => queryClient.invalidateQueries({ queryKey: clientKeys.all });
+  const refresh = () => refreshAppData(queryClient);
   const stage = useMutation({ mutationFn: (value: (typeof clientStages)[number]) => changeClientStage(clientId, value), onSuccess: refresh });
   const archive = useMutation({ mutationFn: (value: boolean) => setClientArchived(clientId, value), onSuccess: refresh });
   if (query.isLoading) return <DetailSkeleton />;
@@ -38,7 +39,7 @@ function Overview({ client, onStageChange, stagePending }: { client: ClientDetai
 function Contacts({ client }: { client: ClientDetailType }) {
   const queryClient = useQueryClient();
   const [adding, setAdding] = useState(false);
-  const refresh = () => queryClient.invalidateQueries({ queryKey: clientKeys.detail(client.id) });
+  const refresh = () => refreshAppData(queryClient);
   const create = useMutation({ mutationFn: (input: Parameters<typeof createContact>[1]) => createContact(client.id, input), onSuccess: () => { setAdding(false); void refresh(); } });
   const remove = useMutation({ mutationFn: (contactId: string) => deleteContact(client.id, contactId), onSuccess: refresh });
   const update = useMutation({ mutationFn: (contactId: string) => updateContact(client.id, contactId, { isPrimary: true }), onSuccess: refresh });

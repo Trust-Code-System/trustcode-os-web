@@ -12,6 +12,7 @@ import { FormField, Input, Select, Textarea } from "@/components/ui/form-control
 import { PageHeader, Pagination, SectionHeader } from "@/components/ui/navigation";
 import { Tabs } from "@/components/ui/overlays";
 import { toAppError } from "@/lib/errors/app-error";
+import { refreshAppData } from "@/lib/query/cache";
 import {
   activityEntityTypes, addProjectMember, cancelMeeting, changeProjectStatus, completeMilestone,
   createMeeting, createMilestone, createProject, deleteMilestone, inviteUser,
@@ -58,14 +59,14 @@ export function ProjectsScreen() {
   const [archiveView, setArchiveView] = useState<"active" | "archived" | "all">("active");
   const filters = { ...(status ? { status } : {}), ...(priority ? { priority } : {}), ...(archiveView === "all" ? {} : { archived: archiveView === "archived" }) };
   const query = useQuery({ queryKey: workspaceKeys.projects(filters), queryFn: ({ signal }) => Promise.all([listProjects(filters, signal), listClientOptions(signal)]).then(([projects, clients]) => ({ projects, clients })) });
-  const create = useMutation({ mutationFn: createProject, onSuccess: async () => { setAdding(false); await queryClient.invalidateQueries({ queryKey: workspaceKeys.all }); } });
+  const create = useMutation({ mutationFn: createProject, onSuccess: async () => { setAdding(false); await refreshAppData(queryClient); } });
   return <><PageHeader title="Projects" description="Live projects, priorities, deadlines, and delivery status." actions={<Button size="sm" onClick={() => setAdding((value) => !value)}><Plus aria-hidden className="size-4" />Add project</Button>} />{adding ? <ProjectCreateForm clients={query.data?.clients ?? []} mutation={create} /> : null}<div className="surface-panel mb-3 grid gap-2 p-2.5 sm:grid-cols-3"><Select aria-label="Filter projects by status" value={status} onValueChange={(value) => setStatus(value as "" | ProjectStatus)}><option value="">All statuses</option>{projectStatuses.map((value) => <option key={value} value={value}>{label(value)}</option>)}</Select><Select aria-label="Filter projects by priority" value={priority} onValueChange={(value) => setPriority(value as "" | ProjectPriority)}><option value="">All priorities</option>{projectPriorities.map((value) => <option key={value} value={value}>{label(value)}</option>)}</Select><Select aria-label="Filter projects by archive status" value={archiveView} onValueChange={(value) => setArchiveView(value as "active" | "archived" | "all")}><option value="active">Active projects</option><option value="archived">Archived projects</option><option value="all">All projects</option></Select></div>{query.isLoading ? <Skeleton className="h-72" /> : query.isError || !query.data ? <ScreenError title="Projects could not be loaded" error={query.error} retry={() => query.refetch()} compact /> : query.data.projects.length ? <Panel title=""><Table><TableHead><tr><TableHeader>Project</TableHeader><TableHeader>Client</TableHeader><TableHeader>Status</TableHeader><TableHeader>Priority</TableHeader><TableHeader>Due date</TableHeader><TableHeader><span className="sr-only">Edit</span></TableHeader></tr></TableHead><TableBody>{query.data.projects.map((project) => <TableRow key={project.id}><TableCell><div className="flex items-center gap-2"><Link href={`/projects/${project.id}`} className="font-medium hover:underline">{project.name}</Link>{project.archivedAt ? <Badge tone="warning">Archived</Badge> : null}</div></TableCell><TableCell>{clientName(query.data.clients, project.clientId)}</TableCell><TableCell><Badge tone={projectTone(project.status)}>{label(project.status)}</Badge></TableCell><TableCell>{label(project.priority)}</TableCell><TableCell>{project.dueDate ? format(new Date(project.dueDate), "d MMM yyyy") : "Not set"}</TableCell><TableCell><Link href={`/projects/${project.id}/edit`} className="text-xs font-semibold text-brand hover:underline">Edit</Link></TableCell></TableRow>)}</TableBody></Table></Panel> : <CompactEmpty title="No projects found" />}</>;
 }
 
 export function ProjectWorkspaceScreen({ projectId }: { projectId: string }) {
   const queryClient = useQueryClient();
   const query = useQuery({ queryKey: workspaceKeys.project(projectId), queryFn: async ({ signal }) => { const [project, milestones, members, meetings, clients, users] = await Promise.all([getProject(projectId, signal), listMilestones(projectId, signal), listProjectMembers(projectId, signal), listMeetings("all", { projectId }, signal), listClientOptions(signal), listUsers(1, 100, signal).then((result) => result.data)]); return { project, milestones, members, meetings, clients, users }; } });
-  const refresh = () => queryClient.invalidateQueries({ queryKey: workspaceKeys.project(projectId) });
+  const refresh = () => refreshAppData(queryClient);
   const status = useMutation({ mutationFn: (value: ProjectStatus) => changeProjectStatus(projectId, value), onSuccess: refresh });
   const priorityUpdate = useMutation({ mutationFn: (value: ProjectPriority) => updateProject(projectId, { priority: value }), onSuccess: refresh });
   const archive = useMutation({ mutationFn: (value: boolean) => setProjectArchived(projectId, value), onSuccess: refresh });
@@ -85,7 +86,7 @@ export function ProjectWorkspaceScreen({ projectId }: { projectId: string }) {
 export function ProjectEditScreen({ projectId }: { projectId: string }) {
   const queryClient = useQueryClient();
   const query = useQuery({ queryKey: workspaceKeys.project(projectId), queryFn: ({ signal }) => getProject(projectId, signal) });
-  const update = useMutation({ mutationFn: (input: ProjectUpdateInput) => updateProject(projectId, input), onSuccess: () => queryClient.invalidateQueries({ queryKey: workspaceKeys.all }) });
+  const update = useMutation({ mutationFn: (input: ProjectUpdateInput) => updateProject(projectId, input), onSuccess: () => refreshAppData(queryClient) });
 
   if (query.isLoading) return <ScreenSkeleton title="Edit project" />;
   if (query.isError || !query.data) return <ScreenError title="Project could not be loaded" error={query.error} retry={() => query.refetch()} />;
@@ -113,9 +114,9 @@ export function MeetingsScreen() {
   const [view, setView] = useState<MeetingView>("upcoming");
   const [adding, setAdding] = useState(false);
   const query = useQuery({ queryKey: workspaceKeys.meetings(view), queryFn: ({ signal }) => Promise.all([listMeetings(view, {}, signal), listClientOptions(signal), listProjects({ archived: false }, signal)]).then(([meetings, clients, projects]) => ({ meetings, clients, projects })) });
-  const create = useMutation({ mutationFn: createMeeting, onSuccess: async () => { setAdding(false); await queryClient.invalidateQueries({ queryKey: workspaceKeys.all }); } });
-  const cancel = useMutation({ mutationFn: cancelMeeting, onSuccess: () => queryClient.invalidateQueries({ queryKey: workspaceKeys.all }) });
-  const reschedule = useMutation({ mutationFn: ({ id, startsAt }: { id: string; startsAt: string }) => updateMeeting(id, { startsAt }), onSuccess: () => queryClient.invalidateQueries({ queryKey: workspaceKeys.all }) });
+  const create = useMutation({ mutationFn: createMeeting, onSuccess: async () => { setAdding(false); await refreshAppData(queryClient); } });
+  const cancel = useMutation({ mutationFn: cancelMeeting, onSuccess: () => refreshAppData(queryClient) });
+  const reschedule = useMutation({ mutationFn: ({ id, startsAt }: { id: string; startsAt: string }) => updateMeeting(id, { startsAt }), onSuccess: () => refreshAppData(queryClient) });
   return <><PageHeader title="Meetings" description="Scheduled, past, and cancelled meetings from the live API." actions={<Button size="sm" onClick={() => setAdding((value) => !value)}><Plus aria-hidden className="size-4" />Schedule meeting</Button>} />{adding ? <MeetingCreateForm clients={query.data?.clients ?? []} projects={query.data?.projects ?? []} mutation={create} /> : null}<div className="mb-3 max-w-48"><Select aria-label="Meeting view" value={view} onValueChange={(value) => setView(value as MeetingView)}>{["all", "upcoming", "past", "cancelled"].map((value) => <option key={value} value={value}>{label(value)}</option>)}</Select></div>{query.isLoading ? <Skeleton className="h-72" /> : query.isError || !query.data ? <ScreenError title="Meetings could not be loaded" error={query.error} retry={() => query.refetch()} compact /> : query.data.meetings.length ? <Panel title=""><MeetingRows meetings={query.data.meetings} clients={query.data.clients} cancel={(id) => cancel.mutate(id)} reschedule={(id, startsAt) => reschedule.mutate({ id, startsAt })} {...(cancel.variables ? { cancellingId: cancel.variables } : {})} /></Panel> : <CompactEmpty title={`No ${view} meetings`} />}{cancel.error || reschedule.error ? <Alert variant="danger" title="Meeting could not be updated">{toAppError(cancel.error ?? reschedule.error).message}</Alert> : null}</>;
 }
 
@@ -123,9 +124,9 @@ export function TeamScreen() {
   const queryClient = useQueryClient();
   const [inviting, setInviting] = useState(false);
   const query = useQuery({ queryKey: workspaceKeys.users(), queryFn: ({ signal }) => listUsers(1, 100, signal) });
-  const invite = useMutation({ mutationFn: inviteUser, onSuccess: async () => { setInviting(false); await Promise.all([queryClient.invalidateQueries({ queryKey: workspaceKeys.users() }), queryClient.invalidateQueries({ queryKey: [...workspaceKeys.all, "invitations"] })]); } });
-  const active = useMutation({ mutationFn: ({ id, value }: { id: string; value: boolean }) => setUserActive(id, value), onSuccess: () => queryClient.invalidateQueries({ queryKey: workspaceKeys.users() }) });
-  const roleUpdate = useMutation({ mutationFn: ({ id, role }: { id: string; role: "ADMIN" | "MEMBER" }) => updateUser(id, { role }), onSuccess: () => queryClient.invalidateQueries({ queryKey: workspaceKeys.users() }) });
+  const invite = useMutation({ mutationFn: inviteUser, onSuccess: async () => { setInviting(false); await refreshAppData(queryClient); } });
+  const active = useMutation({ mutationFn: ({ id, value }: { id: string; value: boolean }) => setUserActive(id, value), onSuccess: () => refreshAppData(queryClient) });
+  const roleUpdate = useMutation({ mutationFn: ({ id, role }: { id: string; role: "ADMIN" | "MEMBER" }) => updateUser(id, { role }), onSuccess: () => refreshAppData(queryClient) });
   return <><PageHeader title="Team" description="Manage organization members, pending invitations, and access roles." actions={<Button size="sm" onClick={() => setInviting((value) => !value)}><Plus aria-hidden className="size-4" />Invite member</Button>} />{inviting ? <InviteForm mutation={invite} /> : null}{query.isLoading ? <Skeleton className="h-72" /> : query.isError || !query.data ? <ScreenError title="Team could not be loaded" error={query.error} retry={() => query.refetch()} compact /> : query.data.data.length ? <Panel title=""><Table><TableHead><tr><TableHeader>Member</TableHeader><TableHeader>Role</TableHeader><TableHeader>Last login</TableHeader><TableHeader>Status</TableHeader><TableHeader>Action</TableHeader></tr></TableHead><TableBody>{query.data.data.map((user) => <TableRow key={user.id}><TableCell><p className="font-medium">{user.name}</p><p className="text-xs text-text-muted">{user.email}</p></TableCell><TableCell><Select aria-label={`Role for ${user.name}`} value={user.role} disabled={roleUpdate.isPending} onValueChange={(role) => roleUpdate.mutate({ id: user.id, role: role as "ADMIN" | "MEMBER" })}><option value="MEMBER">Member</option><option value="ADMIN">Admin</option></Select></TableCell><TableCell>{user.lastLoginAt ? format(new Date(user.lastLoginAt), "d MMM yyyy, HH:mm") : "Never"}</TableCell><TableCell><div className="flex flex-wrap gap-1"><Badge tone={user.isActive ? "success" : "warning"}>{user.isActive ? "Active" : "Inactive"}</Badge>{user.emailVerifiedAt ? null : <Badge tone="warning">Unverified</Badge>}</div></TableCell><TableCell><Button size="sm" variant="secondary" loading={active.isPending && active.variables?.id === user.id} onClick={() => active.mutate({ id: user.id, value: !user.isActive })}>{user.isActive ? "Deactivate" : "Activate"}</Button></TableCell></TableRow>)}</TableBody></Table></Panel> : <CompactEmpty title="No team members" />}{active.error || roleUpdate.error ? <Alert variant="danger" title="Team member could not be updated">{toAppError(active.error ?? roleUpdate.error).message}</Alert> : null}<InvitationsPanel /></>;
 }
 
@@ -134,7 +135,7 @@ function InvitationsPanel() {
   const queryClient = useQueryClient();
   const [status, setStatus] = useState<InvitationStatus>("PENDING");
   const query = useQuery({ queryKey: workspaceKeys.invitations(status), queryFn: ({ signal }) => listInvitations(status, 1, 100, signal), retry: false });
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: [...workspaceKeys.all, "invitations"] });
+  const invalidate = () => refreshAppData(queryClient);
   const resend = useMutation({ mutationFn: resendInvitation, onSuccess: invalidate });
   const revoke = useMutation({ mutationFn: revokeInvitation, onSuccess: invalidate });
   if (toAppError(query.error).status === 403) return null;

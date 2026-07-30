@@ -4,6 +4,7 @@ import { z } from "zod";
 import type { ApiEnvelope } from "@/lib/api/types";
 import type { SessionUser } from "@/features/auth/types/auth";
 import { clearSession, readSessionUser, sessionCookies, setSession, setSessionTokens } from "@/lib/auth/session";
+import { refreshSessionTokens } from "@/lib/auth/refresh";
 
 type Context = { params: Promise<{ action: string }> };
 type BackendLogin = { user: SessionUser; tokens: { accessToken: string; refreshToken: string } };
@@ -36,16 +37,16 @@ export async function GET(_request: NextRequest, context: Context) {
   if (upstream.response.status === 401) {
     const refreshToken = store.get(sessionCookies.refresh)?.value;
     if (refreshToken) {
-      const refreshed = await backendFetch<{ accessToken: string; refreshToken: string }>("refresh", { method: "POST", body: JSON.stringify({ refreshToken }) });
-      if (refreshed.response.ok && refreshed.body.ok) {
-        await setSessionTokens(refreshed.body.data.accessToken, refreshed.body.data.refreshToken);
-        upstream = await backendFetch<SessionUser>("me", { headers: { Authorization: `Bearer ${refreshed.body.data.accessToken}` } });
+      const refreshed = await refreshSessionTokens(refreshToken);
+      if (refreshed) {
+        await setSessionTokens(refreshed.accessToken, refreshed.refreshToken);
+        upstream = await backendFetch<SessionUser>("me", { headers: { Authorization: `Bearer ${refreshed.accessToken}` } });
       }
     }
   }
   if (upstream.response.ok && upstream.body.ok) {
     const previous = await readSessionUser();
-    await setSession({ user: { ...upstream.body.data, ...(previous?.name ? { name: previous.name } : {}) }, accessToken });
+    await setSession({ user: { ...upstream.body.data, ...(previous?.name ? { name: previous.name } : {}) } });
   }
   if (upstream.response.status === 401) await clearSession();
   return NextResponse.json(upstream.body, { status: upstream.response.status });
