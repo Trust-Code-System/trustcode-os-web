@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Bell, CircleHelp, Menu, Search } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 
 import { BrandMark, BrandWordmark } from "@/components/brand/brand-logo";
@@ -17,7 +17,7 @@ import {
   Tooltip,
 } from "@/components/ui/overlays";
 import { authApi } from "@/features/auth/api/auth";
-import { sessionKeys, useSession } from "@/features/auth/hooks/use-session";
+import { useSession } from "@/features/auth/hooks/use-session";
 import type { SessionUser } from "@/features/auth/types/auth";
 import {
   primaryNavigation,
@@ -26,6 +26,7 @@ import {
   type NavigationItem,
 } from "@/lib/constants/navigation";
 import { cn } from "@/lib/utils/cn";
+import { clearAppCache } from "@/lib/query/cache";
 
 export function AppShell({
   initialUser,
@@ -35,7 +36,6 @@ export function AppShell({
   children: ReactNode;
 }) {
   const pathname = usePathname();
-  const router = useRouter();
   const queryClient = useQueryClient();
   const session = useSession(initialUser);
   const user = session.data;
@@ -43,13 +43,10 @@ export function AppShell({
   const [commandOpen, setCommandOpen] = useState(false);
 
   useEffect(() => {
-    if (
-      session.error &&
-      "status" in session.error &&
-      session.error.status === 401
-    )
-      router.replace(`/login?returnTo=${encodeURIComponent(pathname)}`);
-  }, [pathname, router, session.error]);
+    if (session.error && "status" in session.error && session.error.status === 401) {
+      void clearAppCache(queryClient).then(() => window.location.replace(`/login?returnTo=${encodeURIComponent(pathname)}`));
+    }
+  }, [pathname, queryClient, session.error]);
   useEffect(() => {
     const listener = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
@@ -64,10 +61,8 @@ export function AppShell({
   const logout = useMutation({
     mutationFn: authApi.logout,
     onSettled: async () => {
-      queryClient.removeQueries();
-      await queryClient.cancelQueries({ queryKey: sessionKeys.all });
-      router.replace("/login");
-      router.refresh();
+      await clearAppCache(queryClient);
+      window.location.replace("/login");
     },
   });
   const allNavigation = [...primaryNavigation, ...secondaryNavigation];
