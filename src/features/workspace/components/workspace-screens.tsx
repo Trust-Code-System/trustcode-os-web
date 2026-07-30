@@ -6,21 +6,21 @@ import { Archive, CalendarDays, Check, ExternalLink, Plus, RotateCw, Trash2, Use
 import Link from "next/link";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge, MetricCard, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/data-display";
+import { Badge, MetricCard, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TimelineItem } from "@/components/ui/data-display";
 import { Alert, EmptyState, Skeleton } from "@/components/ui/feedback";
 import { FormField, Input, Select, Textarea } from "@/components/ui/form-controls";
-import { PageHeader, SectionHeader } from "@/components/ui/navigation";
+import { PageHeader, Pagination, SectionHeader } from "@/components/ui/navigation";
 import { Tabs } from "@/components/ui/overlays";
 import { toAppError } from "@/lib/errors/app-error";
 import {
-  addProjectMember, cancelMeeting, changeProjectStatus, completeMilestone,
+  activityEntityTypes, addProjectMember, cancelMeeting, changeProjectStatus, completeMilestone,
   createMeeting, createMilestone, createProject, deleteMilestone, inviteUser,
-  invitationStatuses, listClientOptions, listInvitations, listMeetings, listMilestones,
+  invitationStatuses, listActivity, listClientOptions, listInvitations, listMeetings, listMilestones,
   listProjectMembers, listProjects, listUsers, getProject, projectPriorities, projectRoles,
   projectStatuses, removeProjectMember, resendInvitation, revokeInvitation,
   setProjectArchived, setUserActive, workspaceKeys,
   updateMeeting, updateMilestone, updateProject, updateProjectMemberRole, updateUser,
-  type ClientOption, type EmailDeliveryStatus, type InvitationStatus, type MeetingView, type ProjectPriority, type ProjectStatus,
+  type ActivityEntityType, type ClientOption, type EmailDeliveryStatus, type InvitationStatus, type MeetingView, type ProjectPriority, type ProjectStatus,
   type MeetingInput, type ProjectInput, type ProjectRole,
 } from "../api/workspace";
 
@@ -130,7 +130,20 @@ function invitationTone(status: InvitationStatus) {
 }
 
 export function DocumentsScreen() { return <><PageHeader title="Document Center" description="Document storage is planned but is not present in the current backend build." /><EmptyState title="Documents API not available" description="This screen will connect when the backend adds its document controller and response contract." /></>; }
-export function ActivityScreen() { return <><PageHeader title="Activity Feed" description="The backend records activity internally but does not yet expose a company-wide read endpoint." /><EmptyState title="Activity feed API not available" description="Per-client activity is live on each client page. A unified feed will appear here when /activities is implemented." /></>; }
+export function ActivityScreen() {
+  const [entityType, setEntityType] = useState<"" | ActivityEntityType>("");
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
+  const filters = { ...(entityType ? { entityType } : {}), page, pageSize };
+  const query = useQuery({ queryKey: workspaceKeys.activity(filters), queryFn: ({ signal }) => listActivity(filters, signal) });
+  const filter = <Select aria-label="Filter activity by record type" value={entityType} onValueChange={(value) => { setEntityType(value as "" | ActivityEntityType); setPage(1); }}><option value="">All activity</option>{activityEntityTypes.map((value) => <option key={value} value={value}>{label(value)}</option>)}</Select>;
+
+  if (query.isLoading) return <ScreenSkeleton title="Activity Feed" />;
+  if (query.isError || !query.data) return <ScreenError title="Activity feed could not be loaded" error={query.error} retry={() => query.refetch()} />;
+
+  const meta = query.data.meta ?? { page, pageSize, total: query.data.data.length };
+  return <><PageHeader title="Activity Feed" description="A company-wide history of changes made across clients, projects, meetings, and the team." actions={filter} />{query.data.data.length ? <section className="surface-panel overflow-hidden"><ol className="p-4">{query.data.data.map((item) => <TimelineItem key={item.id} title={label(item.action.replaceAll(".", "_"))} description={`${item.actor.name} · ${label(item.entityType)}`} timestamp={format(new Date(item.createdAt), "d MMM yyyy, HH:mm")} />)}</ol><Pagination page={meta.page} pageSize={meta.pageSize} total={meta.total} onPageChange={setPage} /></section> : <CompactEmpty title="No activity found" />}</>;
+}
 
 function ProjectCreateForm({ clients, mutation }: { clients: ClientOption[]; mutation: MutationLike<ProjectInput> }) {
   const submit = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const data = new FormData(event.currentTarget); mutation.mutate({ name: String(data.get("name") ?? ""), clientId: String(data.get("clientId") ?? ""), ...optionalFields(data, ["description", "startDate", "dueDate"]), priority: String(data.get("priority") ?? "MEDIUM") as ProjectPriority }); };

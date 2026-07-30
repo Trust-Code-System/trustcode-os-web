@@ -11,7 +11,7 @@ const moduleDescriptions: Record<string, { title: string; description: string }>
   projects: { title: "Projects", description: "Projects, milestones, and members." },
   meetings: { title: "Meetings", description: "Meeting scheduling and records." },
   documents: { title: "Documents", description: "Awaiting a backend document controller." },
-  activity: { title: "Activity", description: "Awaiting a unified backend activity endpoint." },
+  activity: { title: "Activity", description: "Company-wide operational history." },
   team: { title: "Team", description: "Team administration." },
 };
 

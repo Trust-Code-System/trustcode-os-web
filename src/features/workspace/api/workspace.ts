@@ -5,12 +5,14 @@ export const projectPriorities = ["LOW", "MEDIUM", "HIGH", "URGENT"] as const;
 export const projectRoles = ["OWNER", "LEAD", "MEMBER"] as const;
 export const milestoneStatuses = ["PENDING", "IN_PROGRESS", "COMPLETED"] as const;
 export const meetingViews = ["all", "upcoming", "past", "cancelled"] as const;
+export const activityEntityTypes = ["USER", "CLIENT", "PROJECT", "MILESTONE", "TASK", "MEETING", "DOCUMENT", "NOTE"] as const;
 
 export type ProjectStatus = (typeof projectStatuses)[number];
 export type ProjectPriority = (typeof projectPriorities)[number];
 export type ProjectRole = (typeof projectRoles)[number];
 export type MilestoneStatus = (typeof milestoneStatuses)[number];
 export type MeetingView = (typeof meetingViews)[number];
+export type ActivityEntityType = (typeof activityEntityTypes)[number];
 
 export type Project = {
   id: string; name: string; description: string | null; clientId: string;
@@ -35,6 +37,16 @@ export type TeamInvitation = {
   expiresAt: string; acceptedAt: string | null; revokedAt: string | null; createdAt: string;
 };
 export type ClientOption = { id: string; name: string; status: "ACTIVE" | "ARCHIVED" };
+export type ActivityFeedItem = {
+  id: string; actorId: string; actor: { id: string; name: string; email: string };
+  action: string; entityType: ActivityEntityType; entityId: string;
+  clientId: string | null; projectId: string | null;
+  metadata: Record<string, unknown>; createdAt: string;
+};
+export type ActivityFilters = {
+  clientId?: string; projectId?: string; actorId?: string;
+  entityType?: ActivityEntityType; action?: string; page?: number; pageSize?: number;
+};
 
 export const workspaceKeys = {
   all: ["workspace"] as const,
@@ -44,6 +56,7 @@ export const workspaceKeys = {
   meetings: (view: MeetingView = "all") => [...workspaceKeys.all, "meetings", view] as const,
   users: () => [...workspaceKeys.all, "users"] as const,
   invitations: (status?: InvitationStatus) => [...workspaceKeys.all, "invitations", status ?? "all"] as const,
+  activity: (filters: ActivityFilters = {}) => [...workspaceKeys.all, "activity", filters] as const,
 };
 
 export function listProjects(filters: { clientId?: string; status?: ProjectStatus; priority?: ProjectPriority; archived?: boolean } = {}, signal?: AbortSignal) {
@@ -82,3 +95,4 @@ export function updateUser(id: string, input: Partial<{ name: string; role: "ADM
 export function setUserActive(id: string, active: boolean) { return apiRequest<TeamUser>(`/api/backend/users/${encodeURIComponent(id)}/${active ? "activate" : "deactivate"}`, { method: "PATCH" }).then((result) => result.data); }
 
 export function listClientOptions(signal?: AbortSignal) { return apiRequest<ClientOption[]>("/api/backend/clients", { query: { page: 1, pageSize: 100 }, ...(signal ? { signal } : {}) }).then((result) => result.data); }
+export function listActivity(filters: ActivityFilters = {}, signal?: AbortSignal) { return apiRequest<ActivityFeedItem[]>("/api/backend/activity", { query: filters, ...(signal ? { signal } : {}) }); }
