@@ -1,8 +1,8 @@
 import { cookies } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
 
-import type { ApiEnvelope } from "@/lib/api/types";
-import { clearSession, sessionCookies, setSessionTokens } from "@/lib/auth/session";
+import { sessionCookies, setSessionTokens } from "@/lib/auth/session";
+import { refreshSessionTokens } from "@/lib/auth/refresh";
 
 type Context = { params: Promise<{ path: string[] }> };
 
@@ -26,13 +26,12 @@ async function handler(request: NextRequest, context: Context) {
   try {
     let response = await fetchUpstream(target, request.method, headers, body);
     if (response.status === 401) {
-      const refreshed = await refreshTokens(store.get(sessionCookies.refresh)?.value);
+      const refreshToken = store.get(sessionCookies.refresh)?.value;
+      const refreshed = refreshToken ? await refreshSessionTokens(refreshToken) : null;
       if (refreshed) {
         await setSessionTokens(refreshed.accessToken, refreshed.refreshToken);
         headers.set("Authorization", `Bearer ${refreshed.accessToken}`);
         response = await fetchUpstream(target, request.method, headers, body);
-      } else {
-        await clearSession();
       }
     }
     const responseHeaders = new Headers();
@@ -48,18 +47,6 @@ async function handler(request: NextRequest, context: Context) {
 
 function fetchUpstream(target: string, method: string, headers: Headers, body?: ArrayBuffer) {
   return fetch(target, { method, headers, ...(body ? { body } : {}), cache: "no-store", signal: AbortSignal.timeout(20_000) });
-}
-
-async function refreshTokens(refreshToken?: string) {
-  if (!refreshToken) return null;
-  const base = process.env.API_BASE_URL ?? "http://localhost:3000/api";
-  try {
-    const response = await fetch(`${base}/auth/refresh`, { method: "POST", headers: { Accept: "application/json", "Content-Type": "application/json" }, body: JSON.stringify({ refreshToken }), cache: "no-store", signal: AbortSignal.timeout(15_000) });
-    const envelope = await response.json() as ApiEnvelope<{ accessToken: string; refreshToken: string }>;
-    return response.ok && envelope.ok ? envelope.data : null;
-  } catch {
-    return null;
-  }
 }
 
 export const GET = handler;

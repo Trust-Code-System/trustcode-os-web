@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-const sessionCookieNames = ["tc_access", "tc_mock_session"];
+// A valid refresh cookie is enough to enter a protected route. The first API
+// request will renew an expired/missing short-lived access cookie.
+const sessionCookieNames = ["tc_access", "tc_refresh", "tc_mock_session"];
 
 export function proxy(request: NextRequest) {
   const authenticated = sessionCookieNames.some((name) => request.cookies.has(name));

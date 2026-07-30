@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -18,7 +18,6 @@ import { loginSchema } from "../schemas/auth";
 type FormValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const form = useForm<FormValues>({
     resolver: zodResolver(loginSchema),
@@ -35,8 +34,9 @@ export function LoginForm() {
         requested?.startsWith("/") && !requested.startsWith("//")
           ? requested
           : "/dashboard";
-      router.replace(target);
-      router.refresh();
+      // A full navigation guarantees the Set-Cookie response from login is
+      // included when the protected route guard runs.
+      window.location.replace(target);
     },
   });
   const resend = useMutation({ mutationFn: () => authApi.resendVerification(form.getValues("email")) });
