@@ -61,6 +61,7 @@ export function VerifyEmailForm() {
   return (
     <div className="grid gap-5">
       <Alert variant="danger" title="Verification failed">{toAppError(verify.error).message}</Alert>
+      {resend.error ? <Alert variant="danger" title="Could not resend verification">{toAppError(resend.error).message}</Alert> : null}
       {resend.isSuccess ? <Alert variant="success" title="Check your inbox">If the address still needs verification, a new link has been sent.</Alert> : <form className="grid gap-5" onSubmit={(event) => { event.preventDefault(); resend.mutate(email); }} noValidate><FormField label="Email address" htmlFor="resend-email" description="We will send a fresh verification link."><Input id="resend-email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></FormField><Button type="submit" loading={resend.isPending} className="bg-white text-brand shadow-none hover:bg-white/90 hover:text-brand">Send a new link</Button></form>}
     </div>
   );
