@@ -10,6 +10,7 @@ import { z } from "zod";
 import { Alert } from "@/components/ui/feedback";
 import { Button } from "@/components/ui/button";
 import { FormField, Input } from "@/components/ui/form-controls";
+import { useMocks } from "@/lib/config/env";
 import { toAppError } from "@/lib/errors/app-error";
 import { authApi } from "../api/auth";
 import { loginSchema } from "../schemas/auth";
@@ -22,8 +23,8 @@ export function LoginForm() {
   const form = useForm<FormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "admin@trustcode.test",
-      password: "TrustCode123!",
+      email: useMocks ? "admin@trustcode.test" : "",
+      password: useMocks ? "TrustCode123!" : "",
     },
   });
   const login = useMutation({
@@ -120,12 +121,14 @@ export function LoginForm() {
       >
         Sign in
       </Button>
-      <div className="rounded-[var(--radius-md)] bg-white/10 p-3 text-xs text-white/80">
-        <p className="font-medium text-white">Mock-mode accounts</p>
-        <p className="mt-1">Admin: admin@trustcode.test</p>
-        <p>Member: member@trustcode.test</p>
-        <p>Password: TrustCode123!</p>
-      </div>
+      {useMocks ? (
+        <div className="rounded-[var(--radius-md)] bg-white/10 p-3 text-xs text-white/80">
+          <p className="font-medium text-white">Mock-mode accounts</p>
+          <p className="mt-1">Admin: admin@trustcode.test</p>
+          <p>Member: member@trustcode.test</p>
+          <p>Password: TrustCode123!</p>
+        </div>
+      ) : null}
     </form>
   );
 }
