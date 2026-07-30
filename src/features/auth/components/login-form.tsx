@@ -38,7 +38,11 @@ export function LoginForm() {
       router.refresh();
     },
   });
+  const resend = useMutation({ mutationFn: () => authApi.resendVerification(form.getValues("email")) });
   const error = login.error ? toAppError(login.error) : null;
+  // The backend blocks sign-in until the address is verified and re-sends the link on
+  // its own, so this only offers a manual retry after the cooldown.
+  const needsVerification = error?.code === "EMAIL_VERIFICATION_REQUIRED";
 
   return (
     <form
@@ -47,8 +51,24 @@ export function LoginForm() {
       noValidate
     >
       {error ? (
-        <Alert variant="danger" title="Sign in failed">
-          {error.message}
+        <Alert
+          variant={needsVerification ? "warning" : "danger"}
+          title={needsVerification ? "Verify your email" : "Sign in failed"}
+          action={
+            needsVerification && !resend.isSuccess ? (
+              <Button
+                size="sm"
+                variant="secondary"
+                type="button"
+                loading={resend.isPending}
+                onClick={() => resend.mutate()}
+              >
+                Resend link
+              </Button>
+            ) : undefined
+          }
+        >
+          {resend.isSuccess ? "A new verification link is on its way." : error.message}
         </Alert>
       ) : null}
       <FormField

@@ -8,6 +8,10 @@ import { clearSession, readSessionUser, sessionCookies, setSession, setSessionTo
 type Context = { params: Promise<{ action: string }> };
 type BackendLogin = { user: SessionUser; tokens: { accessToken: string; refreshToken: string } };
 
+// Unauthenticated backend /auth routes the browser is allowed to reach through
+// this handler. Each name maps 1:1 to a backend endpoint under /auth.
+const publicActions = ["forgot-password", "reset-password", "accept-invite", "verify-email", "resend-verification"];
+
 const mockUsers: Record<string, SessionUser> = {
   "admin@trustcode.test": { id: "user_admin", email: "admin@trustcode.test", name: "Ghost", role: "ADMIN" },
   "member@trustcode.test": { id: "user_member", email: "member@trustcode.test", name: "David Mensah", role: "MEMBER" },
@@ -58,7 +62,7 @@ async function handleMockPost(action: string, request: NextRequest) {
     await clearSession();
     return success({ success: true as const });
   }
-  if (["forgot-password", "reset-password", "change-password"].includes(action)) return success({ success: true as const });
+  if (publicActions.includes(action) || action === "change-password") return success({ success: true as const });
   if (action !== "login") return failure(404, "NOT_FOUND", "This session operation does not exist.");
   const input = z.object({ email: z.email(), password: z.string() }).safeParse(await safeJson(request));
   if (!input.success) return failure(422, "VALIDATION_FAILED", "Please check the submitted values.", input.error.flatten().fieldErrors);
@@ -69,7 +73,7 @@ async function handleMockPost(action: string, request: NextRequest) {
 }
 
 async function handleBackendPost(action: string, request: NextRequest) {
-  if (!["login", "logout", "forgot-password", "reset-password", "change-password"].includes(action)) return failure(404, "NOT_FOUND", "This session operation does not exist.");
+  if (!["login", "logout", "change-password", ...publicActions].includes(action)) return failure(404, "NOT_FOUND", "This session operation does not exist.");
   const body = await safeJson(request);
   const store = await import("next/headers").then(({ cookies }) => cookies());
   const headers: HeadersInit = {};

@@ -23,7 +23,17 @@ export type Milestone = { id: string; projectId: string; title: string; descript
 export type ProjectMember = { id: string; projectId: string; userId: string; role: ProjectRole; joinedAt: string; user: { id: string; name: string; email: string; role: "ADMIN" | "MEMBER" } };
 export type Meeting = { id: string; title: string; agenda: string | null; startsAt: string; endsAt: string; meetingUrl: string | null; cancelledAt: string | null; clientId: string | null; projectId: string | null; createdById: string; createdAt: string; updatedAt: string };
 export type MeetingInput = { title: string; startsAt: string; agenda?: string; meetingUrl?: string; clientId?: string; projectId?: string };
-export type TeamUser = { id: string; email: string; name: string; role: "ADMIN" | "MEMBER"; isActive: boolean; lastLoginAt: string | null; createdAt: string };
+export type TeamUser = { id: string; email: string; name: string; role: "ADMIN" | "MEMBER"; isActive: boolean; lastLoginAt: string | null; emailVerifiedAt: string | null; createdAt: string };
+export const invitationStatuses = ["PENDING", "ACCEPTED", "REVOKED", "EXPIRED"] as const;
+export type InvitationStatus = (typeof invitationStatuses)[number];
+// Mirrors the backend EmailDeliveryStatus enum, which tracks Resend webhook events.
+export const emailDeliveryStatuses = ["PENDING", "SENDING", "SUBMITTED", "DELIVERED", "DELAYED", "FAILED", "BOUNCED", "SUPPRESSED", "COMPLAINED"] as const;
+export type EmailDeliveryStatus = (typeof emailDeliveryStatuses)[number];
+export type TeamInvitation = {
+  id: string; email: string; name: string; role: "ADMIN" | "MEMBER";
+  status: InvitationStatus; emailStatus: EmailDeliveryStatus; emailAttemptCount: number;
+  expiresAt: string; acceptedAt: string | null; revokedAt: string | null; createdAt: string;
+};
 export type ClientOption = { id: string; name: string; status: "ACTIVE" | "ARCHIVED" };
 
 export const workspaceKeys = {
@@ -33,6 +43,7 @@ export const workspaceKeys = {
   project: (id: string) => [...workspaceKeys.all, "project", id] as const,
   meetings: (view: MeetingView = "all") => [...workspaceKeys.all, "meetings", view] as const,
   users: () => [...workspaceKeys.all, "users"] as const,
+  invitations: (status?: InvitationStatus) => [...workspaceKeys.all, "invitations", status ?? "all"] as const,
 };
 
 export function listProjects(filters: { clientId?: string; status?: ProjectStatus; priority?: ProjectPriority; archived?: boolean } = {}, signal?: AbortSignal) {
@@ -61,7 +72,12 @@ export function updateMeeting(id: string, input: Partial<MeetingInput>) { return
 export function cancelMeeting(id: string) { return apiRequest<Meeting>(`/api/backend/meetings/${encodeURIComponent(id)}/cancel`, { method: "PATCH" }).then((result) => result.data); }
 
 export function listUsers(page = 1, pageSize = 100, signal?: AbortSignal) { return apiRequest<TeamUser[]>("/api/backend/users", { query: { page, pageSize }, ...(signal ? { signal } : {}) }); }
-export function inviteUser(input: { name: string; email: string; role: "ADMIN" | "MEMBER" }) { return apiRequest<TeamUser>("/api/backend/users", { method: "POST", body: input }).then((result) => result.data); }
+// Inviting no longer creates the user directly: it records a pending invitation and
+// emails a link, and the account is created when the invitee accepts it.
+export function inviteUser(input: { name: string; email: string; role: "ADMIN" | "MEMBER" }) { return apiRequest<TeamInvitation>("/api/backend/users/invitations", { method: "POST", body: input }).then((result) => result.data); }
+export function listInvitations(status?: InvitationStatus, page = 1, pageSize = 100, signal?: AbortSignal) { return apiRequest<TeamInvitation[]>("/api/backend/users/invitations", { query: { page, pageSize, ...(status ? { status } : {}) }, ...(signal ? { signal } : {}) }); }
+export function resendInvitation(id: string) { return apiRequest<TeamInvitation>(`/api/backend/users/invitations/${encodeURIComponent(id)}/resend`, { method: "POST" }).then((result) => result.data); }
+export function revokeInvitation(id: string) { return apiRequest<TeamInvitation>(`/api/backend/users/invitations/${encodeURIComponent(id)}/revoke`, { method: "PATCH" }).then((result) => result.data); }
 export function updateUser(id: string, input: Partial<{ name: string; role: "ADMIN" | "MEMBER" }>) { return apiRequest<TeamUser>(`/api/backend/users/${encodeURIComponent(id)}`, { method: "PATCH", body: input }).then((result) => result.data); }
 export function setUserActive(id: string, active: boolean) { return apiRequest<TeamUser>(`/api/backend/users/${encodeURIComponent(id)}/${active ? "activate" : "deactivate"}`, { method: "PATCH" }).then((result) => result.data); }
 

@@ -15,11 +15,12 @@ import { toAppError } from "@/lib/errors/app-error";
 import {
   addProjectMember, cancelMeeting, changeProjectStatus, completeMilestone,
   createMeeting, createMilestone, createProject, deleteMilestone, inviteUser,
-  listClientOptions, listMeetings, listMilestones, listProjectMembers, listProjects,
-  listUsers, getProject, projectPriorities, projectRoles, projectStatuses,
-  removeProjectMember, setProjectArchived, setUserActive, workspaceKeys,
+  invitationStatuses, listClientOptions, listInvitations, listMeetings, listMilestones,
+  listProjectMembers, listProjects, listUsers, getProject, projectPriorities, projectRoles,
+  projectStatuses, removeProjectMember, resendInvitation, revokeInvitation,
+  setProjectArchived, setUserActive, workspaceKeys,
   updateMeeting, updateMilestone, updateProject, updateProjectMemberRole, updateUser,
-  type ClientOption, type MeetingView, type ProjectPriority, type ProjectStatus,
+  type ClientOption, type EmailDeliveryStatus, type InvitationStatus, type MeetingView, type ProjectPriority, type ProjectStatus,
   type MeetingInput, type ProjectInput, type ProjectRole,
 } from "../api/workspace";
 
@@ -98,7 +99,34 @@ export function TeamScreen() {
   const invite = useMutation({ mutationFn: inviteUser, onSuccess: async () => { setInviting(false); await queryClient.invalidateQueries({ queryKey: workspaceKeys.users() }); } });
   const active = useMutation({ mutationFn: ({ id, value }: { id: string; value: boolean }) => setUserActive(id, value), onSuccess: () => queryClient.invalidateQueries({ queryKey: workspaceKeys.users() }) });
   const roleUpdate = useMutation({ mutationFn: ({ id, role }: { id: string; role: "ADMIN" | "MEMBER" }) => updateUser(id, { role }), onSuccess: () => queryClient.invalidateQueries({ queryKey: workspaceKeys.users() }) });
-  return <><PageHeader title="Team" description="Manage organization members and access roles through the users API." actions={<Button size="sm" onClick={() => setInviting((value) => !value)}><Plus aria-hidden className="size-4" />Invite member</Button>} />{inviting ? <InviteForm mutation={invite} /> : null}{query.isLoading ? <Skeleton className="h-72" /> : query.isError || !query.data ? <ScreenError title="Team could not be loaded" error={query.error} retry={() => query.refetch()} compact /> : query.data.data.length ? <Panel title=""><Table><TableHead><tr><TableHeader>Member</TableHeader><TableHeader>Role</TableHeader><TableHeader>Last login</TableHeader><TableHeader>Status</TableHeader><TableHeader>Action</TableHeader></tr></TableHead><TableBody>{query.data.data.map((user) => <TableRow key={user.id}><TableCell><p className="font-medium">{user.name}</p><p className="text-xs text-text-muted">{user.email}</p></TableCell><TableCell><Select aria-label={`Role for ${user.name}`} value={user.role} disabled={roleUpdate.isPending} onValueChange={(role) => roleUpdate.mutate({ id: user.id, role: role as "ADMIN" | "MEMBER" })}><option value="MEMBER">Member</option><option value="ADMIN">Admin</option></Select></TableCell><TableCell>{user.lastLoginAt ? format(new Date(user.lastLoginAt), "d MMM yyyy, HH:mm") : "Never"}</TableCell><TableCell><Badge tone={user.isActive ? "success" : "warning"}>{user.isActive ? "Active" : "Inactive"}</Badge></TableCell><TableCell><Button size="sm" variant="secondary" loading={active.isPending && active.variables?.id === user.id} onClick={() => active.mutate({ id: user.id, value: !user.isActive })}>{user.isActive ? "Deactivate" : "Activate"}</Button></TableCell></TableRow>)}</TableBody></Table></Panel> : <CompactEmpty title="No team members" />}{active.error || roleUpdate.error ? <Alert variant="danger" title="Team member could not be updated">{toAppError(active.error ?? roleUpdate.error).message}</Alert> : null}</>;
+  return <><PageHeader title="Team" description="Manage organization members, pending invitations, and access roles." actions={<Button size="sm" onClick={() => setInviting((value) => !value)}><Plus aria-hidden className="size-4" />Invite member</Button>} />{inviting ? <InviteForm mutation={invite} /> : null}{query.isLoading ? <Skeleton className="h-72" /> : query.isError || !query.data ? <ScreenError title="Team could not be loaded" error={query.error} retry={() => query.refetch()} compact /> : query.data.data.length ? <Panel title=""><Table><TableHead><tr><TableHeader>Member</TableHeader><TableHeader>Role</TableHeader><TableHeader>Last login</TableHeader><TableHeader>Status</TableHeader><TableHeader>Action</TableHeader></tr></TableHead><TableBody>{query.data.data.map((user) => <TableRow key={user.id}><TableCell><p className="font-medium">{user.name}</p><p className="text-xs text-text-muted">{user.email}</p></TableCell><TableCell><Select aria-label={`Role for ${user.name}`} value={user.role} disabled={roleUpdate.isPending} onValueChange={(role) => roleUpdate.mutate({ id: user.id, role: role as "ADMIN" | "MEMBER" })}><option value="MEMBER">Member</option><option value="ADMIN">Admin</option></Select></TableCell><TableCell>{user.lastLoginAt ? format(new Date(user.lastLoginAt), "d MMM yyyy, HH:mm") : "Never"}</TableCell><TableCell><div className="flex flex-wrap gap-1"><Badge tone={user.isActive ? "success" : "warning"}>{user.isActive ? "Active" : "Inactive"}</Badge>{user.emailVerifiedAt ? null : <Badge tone="warning">Unverified</Badge>}</div></TableCell><TableCell><Button size="sm" variant="secondary" loading={active.isPending && active.variables?.id === user.id} onClick={() => active.mutate({ id: user.id, value: !user.isActive })}>{user.isActive ? "Deactivate" : "Activate"}</Button></TableCell></TableRow>)}</TableBody></Table></Panel> : <CompactEmpty title="No team members" />}{active.error || roleUpdate.error ? <Alert variant="danger" title="Team member could not be updated">{toAppError(active.error ?? roleUpdate.error).message}</Alert> : null}<InvitationsPanel /></>;
+}
+
+// Invitations are admin-only upstream; a 403 here just means the signed-in user is a member.
+function InvitationsPanel() {
+  const queryClient = useQueryClient();
+  const [status, setStatus] = useState<InvitationStatus>("PENDING");
+  const query = useQuery({ queryKey: workspaceKeys.invitations(status), queryFn: ({ signal }) => listInvitations(status, 1, 100, signal), retry: false });
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: [...workspaceKeys.all, "invitations"] });
+  const resend = useMutation({ mutationFn: resendInvitation, onSuccess: invalidate });
+  const revoke = useMutation({ mutationFn: revokeInvitation, onSuccess: invalidate });
+  if (toAppError(query.error).status === 403) return null;
+
+  const filter = <Select aria-label="Invitation status" value={status} onValueChange={(value) => setStatus(value as InvitationStatus)}>{invitationStatuses.map((value) => <option key={value} value={value}>{label(value)}</option>)}</Select>;
+  return <section className="mt-8 grid gap-4"><SectionHeader title="Invitations" description="Invited people appear here until they accept the emailed link." action={filter} />{query.isLoading ? <Skeleton className="h-40" /> : query.isError || !query.data ? <ScreenError title="Invitations could not be loaded" error={query.error} retry={() => query.refetch()} compact /> : query.data.data.length ? <Panel title=""><Table><TableHead><tr><TableHeader>Invitee</TableHeader><TableHeader>Role</TableHeader><TableHeader>Status</TableHeader><TableHeader>Email</TableHeader><TableHeader>Expires</TableHeader><TableHeader>Action</TableHeader></tr></TableHead><TableBody>{query.data.data.map((invitation) => <TableRow key={invitation.id}><TableCell><p className="font-medium">{invitation.name}</p><p className="text-xs text-text-muted">{invitation.email}</p></TableCell><TableCell>{label(invitation.role)}</TableCell><TableCell><Badge tone={invitationTone(invitation.status)}>{label(invitation.status)}</Badge></TableCell><TableCell><Badge tone={deliveryTone(invitation.emailStatus)}>{label(invitation.emailStatus)}</Badge>{invitation.emailAttemptCount > 1 ? <span className="ml-2 text-xs text-text-muted">{invitation.emailAttemptCount} attempts</span> : null}</TableCell><TableCell>{format(new Date(invitation.expiresAt), "d MMM yyyy, HH:mm")}</TableCell><TableCell>{invitation.status === "ACCEPTED" || invitation.status === "REVOKED" ? <span className="text-xs text-text-muted">No action</span> : <div className="flex gap-2"><Button size="sm" variant="secondary" loading={resend.isPending && resend.variables === invitation.id} onClick={() => resend.mutate(invitation.id)}><RotateCw aria-hidden className="size-4" />Resend</Button><Button size="sm" variant="ghost" loading={revoke.isPending && revoke.variables === invitation.id} onClick={() => revoke.mutate(invitation.id)}>Revoke</Button></div>}</TableCell></TableRow>)}</TableBody></Table></Panel> : <CompactEmpty title={`No ${status.toLowerCase()} invitations`} />}{resend.error || revoke.error ? <Alert variant="danger" title="Invitation could not be updated">{toAppError(resend.error ?? revoke.error).message}</Alert> : null}</section>;
+}
+
+function deliveryTone(status: EmailDeliveryStatus) {
+  if (status === "FAILED" || status === "BOUNCED" || status === "SUPPRESSED" || status === "COMPLAINED") return "danger" as const;
+  if (status === "DELIVERED" || status === "SUBMITTED") return "success" as const;
+  if (status === "DELAYED") return "warning" as const;
+  return "neutral" as const;
+}
+
+function invitationTone(status: InvitationStatus) {
+  if (status === "ACCEPTED") return "success" as const;
+  if (status === "PENDING") return "info" as const;
+  return "warning" as const;
 }
 
 export function DocumentsScreen() { return <><PageHeader title="Document Center" description="Document storage is planned but is not present in the current backend build." /><EmptyState title="Documents API not available" description="This screen will connect when the backend adds its document controller and response contract." /></>; }

@@ -10,8 +10,11 @@ const success = <T>(data: T, meta?: { page: number; pageSize: number; total: num
 const projects = clients.flatMap((client) => client.projects.map((project) => ({ ...project, description: null, clientId: client.id, startDate: null, completedAt: null, archivedAt: null, createdAt: client.createdAt })));
 const meetings = clients.flatMap((client) => client.meetings.map((meeting) => ({ ...meeting, agenda: null, meetingUrl: null, clientId: client.id, projectId: client.projects[0]?.id ?? null, createdById: "user_admin", createdAt: client.createdAt })));
 const users = [
-  { id: "user_admin", email: "admin@trustcode.test", name: "Ghost", role: "ADMIN", isActive: true, lastLoginAt: "2026-07-20T10:00:00.000Z", createdAt: "2026-05-01T09:00:00.000Z" },
-  { id: "user_member", email: "member@trustcode.test", name: "David Mensah", role: "MEMBER", isActive: true, lastLoginAt: null, createdAt: "2026-05-02T09:00:00.000Z" },
+  { id: "user_admin", email: "admin@trustcode.test", name: "Ghost", role: "ADMIN", isActive: true, lastLoginAt: "2026-07-20T10:00:00.000Z", emailVerifiedAt: "2026-05-01T09:00:00.000Z", createdAt: "2026-05-01T09:00:00.000Z" },
+  { id: "user_member", email: "member@trustcode.test", name: "David Mensah", role: "MEMBER", isActive: true, lastLoginAt: null, emailVerifiedAt: null, createdAt: "2026-05-02T09:00:00.000Z" },
+];
+const invitations = [
+  { id: "invite_1", email: "newhire@trustcode.test", name: "New Hire", role: "MEMBER", status: "PENDING", emailStatus: "DELIVERED", emailAttemptCount: 1, expiresAt: "2026-08-02T09:00:00.000Z", acceptedAt: null, revokedAt: null, createdAt: "2026-07-30T09:00:00.000Z" },
 ];
 
 export const handlers = [
@@ -29,6 +32,11 @@ export const handlers = [
   http.get("*/api/backend/projects/:projectId/members", () => success([{ id: "member-1", projectId: "mock", userId: "user_admin", role: "OWNER", joinedAt: "2026-05-01T09:00:00.000Z", user: users[0] }])),
   http.get("*/api/backend/projects/:projectId", ({ params }) => { const project = projects.find((item) => item.id === params.projectId); return project ? success(project) : HttpResponse.json({ ok: false, error: { code: "NOT_FOUND", message: "Project not found." } }, { status: 404 }); }),
   http.get("*/api/backend/meetings", ({ request }) => { const url = new URL(request.url); const clientId = url.searchParams.get("clientId"); const projectId = url.searchParams.get("projectId"); const view = url.searchParams.get("view"); return success(meetings.filter((meeting) => (!clientId || meeting.clientId === clientId) && (!projectId || meeting.projectId === projectId) && (view !== "cancelled" || meeting.cancelledAt) && (view !== "upcoming" || (!meeting.cancelledAt && new Date(meeting.startsAt) >= new Date())))); }),
+  // Registered before the generic users route so it is not shadowed by "*/api/backend/users".
+  http.get("*/api/backend/users/invitations", ({ request }) => { const status = new URL(request.url).searchParams.get("status"); const rows = invitations.filter((invitation) => !status || invitation.status === status); return success(rows, { page: 1, pageSize: 100, total: rows.length }); }),
+  http.post("*/api/backend/users/invitations", async ({ request }) => { const body = await request.json() as { name: string; email: string; role: string }; return success({ ...invitations[0], id: `invite_${invitations.length + 1}`, ...body, status: "PENDING", emailStatus: "SUBMITTED", emailAttemptCount: 1 }); }),
+  http.post("*/api/backend/users/invitations/:id/resend", ({ params }) => success({ ...invitations[0], id: String(params.id), emailStatus: "SUBMITTED", emailAttemptCount: 2 })),
+  http.patch("*/api/backend/users/invitations/:id/revoke", ({ params }) => success({ ...invitations[0], id: String(params.id), status: "REVOKED", revokedAt: new Date().toISOString() })),
   http.get("*/api/backend/users", () => success(users, { page: 1, pageSize: 100, total: users.length })),
 ];
 
