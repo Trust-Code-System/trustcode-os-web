@@ -1,6 +1,6 @@
 # API Contracts
 
-Audit source: `Trust-Code-System/trustcode-os-api` commit `4fc7018a704af01396c9cbcf50715a6fa0584927` on 2026-07-28. The backend repository was inspected read-only.
+Audit source: `Trust-Code-System/trustcode-os-api` commit `0af492cd` (merge of `feat/team-invitations`) on 2026-07-30. The backend repository was inspected read-only.
 
 ## Platform contract
 
@@ -13,8 +13,9 @@ Audit source: `Trust-Code-System/trustcode-os-api` commit `4fc7018a704af01396c9c
 
 ## Connected modules
 
-- Auth: login, logout, refresh, forgot/reset/change password, current user.
-- Users: paginated list, invite, role update, activate/deactivate. Team administration remains admin-only in both navigation and API authorization.
+- Auth: login, logout, refresh, forgot/reset/change password, current user, accept invitation, verify email, resend verification.
+- Users: paginated list, role update, activate/deactivate. Team administration remains admin-only in both navigation and API authorization.
+- Team invitations: create, paginated list by status, resend, revoke. Admin-only.
 - Clients: paginated list by status/stage, detail, create, edit, stage change, archive/restore.
 - Client contacts: list, create, choose primary contact, delete.
 - Client activity: paginated per-client timeline.
@@ -22,6 +23,13 @@ Audit source: `Trust-Code-System/trustcode-os-api` commit `4fc7018a704af01396c9c
 - Project milestones: list, create, status update, complete, delete.
 - Project members: list, add, role update, remove.
 - Meetings: list/filter, schedule, reschedule, cancel.
+
+## Onboarding and email verification
+
+- Inviting a member creates a pending `TeamInvitation` and emails a link; the user account is only created when the invite is accepted. Invitations expire after 3 days and carry a delivery status (`emailStatus`, `emailAttemptCount`) reported by the Resend webhook.
+- The backend emails links to `${APP_URL}/accept-invite?token=...` and `${APP_URL}/verify-email?token=...`, so `APP_URL` must be the deployed frontend origin.
+- Login returns `403` with code `EMAIL_VERIFICATION_REQUIRED` for an unverified address and re-sends the verification email (5-minute cooldown). The login form surfaces this and offers a manual resend.
+- Unauthenticated auth calls (`accept-invite`, `verify-email`, `resend-verification`, forgot/reset password) go through `/api/session/*`, not `/api/backend/*`, which requires a session cookie.
 
 Client detail is composed in parallel from the client, contacts, projects, meetings, and per-client activity endpoints because the backend intentionally returns separate resources.
 

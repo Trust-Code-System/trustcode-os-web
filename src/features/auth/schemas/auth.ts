@@ -12,6 +12,11 @@ export const resetPasswordSchema = z.object({
   password: z.string().min(12, "Use at least 12 characters."),
 });
 
+export const acceptInvitationSchema = z.object({
+  token: z.string().min(1, "The invitation link is missing its token."),
+  password: z.string().min(12, "Use at least 12 characters."),
+});
+
 export const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, "Enter your current password."),
   newPassword: z.string().min(12, "Use at least 12 characters."),

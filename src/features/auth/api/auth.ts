@@ -8,4 +8,7 @@ export const authApi = {
   forgotPassword: (email: string) => apiRequest<{ success: true }>("/api/session/forgot-password", { method: "POST", body: { email } }).then((result) => result.data),
   resetPassword: (token: string, password: string) => apiRequest<{ success: true }>("/api/session/reset-password", { method: "POST", body: { token, password } }).then((result) => result.data),
   changePassword: (currentPassword: string, newPassword: string) => apiRequest<{ success: true }>("/api/session/change-password", { method: "POST", body: { currentPassword, newPassword } }).then((result) => result.data),
+  acceptInvitation: (token: string, password: string) => apiRequest<{ success: true }>("/api/session/accept-invite", { method: "POST", body: { token, password } }).then((result) => result.data),
+  verifyEmail: (token: string) => apiRequest<{ success: true }>("/api/session/verify-email", { method: "POST", body: { token } }).then((result) => result.data),
+  resendVerification: (email: string) => apiRequest<{ success: true }>("/api/session/resend-verification", { method: "POST", body: { email } }).then((result) => result.data),
 };
