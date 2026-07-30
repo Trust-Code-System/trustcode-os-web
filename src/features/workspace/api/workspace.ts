@@ -21,6 +21,7 @@ export type Project = {
   createdAt: string; updatedAt: string;
 };
 export type ProjectInput = { name: string; clientId: string; description?: string; status?: ProjectStatus; priority?: ProjectPriority; startDate?: string; dueDate?: string };
+export type ProjectUpdateInput = Partial<Omit<ProjectInput, "clientId" | "status">>;
 export type Milestone = { id: string; projectId: string; title: string; description: string | null; status: MilestoneStatus; dueDate: string | null; completedAt: string | null; position: number; createdAt: string; updatedAt: string };
 export type ProjectMember = { id: string; projectId: string; userId: string; role: ProjectRole; joinedAt: string; user: { id: string; name: string; email: string; role: "ADMIN" | "MEMBER" } };
 export type Meeting = { id: string; title: string; agenda: string | null; startsAt: string; endsAt: string; meetingUrl: string | null; cancelledAt: string | null; clientId: string | null; projectId: string | null; createdById: string; createdAt: string; updatedAt: string };
@@ -64,7 +65,7 @@ export function listProjects(filters: { clientId?: string; status?: ProjectStatu
 }
 export function getProject(id: string, signal?: AbortSignal) { return apiRequest<Project>(`/api/backend/projects/${encodeURIComponent(id)}`, signal ? { signal } : {}).then((result) => result.data); }
 export function createProject(input: ProjectInput) { return apiRequest<Project>("/api/backend/projects", { method: "POST", body: input }).then((result) => result.data); }
-export function updateProject(id: string, input: Partial<Omit<ProjectInput, "clientId" | "status">>) { return apiRequest<Project>(`/api/backend/projects/${encodeURIComponent(id)}`, { method: "PATCH", body: input }).then((result) => result.data); }
+export function updateProject(id: string, input: ProjectUpdateInput) { return apiRequest<Project>(`/api/backend/projects/${encodeURIComponent(id)}`, { method: "PATCH", body: input }).then((result) => result.data); }
 export function changeProjectStatus(id: string, status: ProjectStatus) { return apiRequest<Project>(`/api/backend/projects/${encodeURIComponent(id)}/status`, { method: "PATCH", body: { status } }).then((result) => result.data); }
 export function setProjectArchived(id: string, archived: boolean) { return apiRequest<Project>(`/api/backend/projects/${encodeURIComponent(id)}/${archived ? "archive" : "restore"}`, { method: "PATCH" }).then((result) => result.data); }
 

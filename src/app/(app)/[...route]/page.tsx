@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { PlaceholderPage } from "@/components/feedback/placeholder-page";
 import { Alert } from "@/components/ui/feedback";
 import { PageHeader } from "@/components/ui/navigation";
-import { ActivityScreen, DashboardScreen, DocumentsScreen, MeetingsScreen, ProjectsScreen, ProjectWorkspaceScreen, TeamScreen } from "@/features/workspace/components/workspace-screens";
+import { ActivityScreen, DashboardScreen, DocumentsScreen, MeetingsScreen, ProjectEditScreen, ProjectsScreen, ProjectWorkspaceScreen, TeamScreen } from "@/features/workspace/components/workspace-screens";
 import { readSessionUser } from "@/lib/auth/session";
 
 const moduleDescriptions: Record<string, { title: string; description: string }> = {
@@ -29,6 +29,7 @@ export default async function DeferredRoutePage({ params }: { params: Promise<{ 
   if (routeModule === "dashboard" && route.length === 1) return <DashboardScreen />;
   if (routeModule === "projects" && route.length === 1) return <ProjectsScreen />;
   if (routeModule === "projects" && route.length === 2 && route[1]) return <ProjectWorkspaceScreen projectId={route[1]} />;
+  if (routeModule === "projects" && route.length === 3 && route[1] && route[2] === "edit") return <ProjectEditScreen projectId={route[1]} />;
   if (routeModule === "meetings" && route.length === 1) return <MeetingsScreen />;
   if (routeModule === "documents" && route.length === 1) return <DocumentsScreen />;
   if (routeModule === "activity" && route.length === 1) return <ActivityScreen />;
