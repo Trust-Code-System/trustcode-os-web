@@ -37,21 +37,21 @@ a { text-decoration: none; }
 /* Themed scrollbars: Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--border-strong) var(--workspace);
+  scrollbar-color: color-mix(in srgb, var(--brand) 48%, transparent) transparent;
 }
 
 /* Themed scrollbars: Chromium / Safari */
 *::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 4px;
+  height: 4px;
 }
 *::-webkit-scrollbar-track {
-  background: var(--workspace);
+  background: transparent;
   border-radius: var(--radius-full);
 }
 *::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
-  border: 2px solid var(--workspace);
+  background: color-mix(in srgb, var(--brand) 48%, transparent);
+  border: 0;
   border-radius: var(--radius-full);
 }
 *::-webkit-scrollbar-thumb:hover {
@@ -61,15 +61,16 @@ a { text-decoration: none; }
   background: var(--brand-hover);
 }
 *::-webkit-scrollbar-corner {
-  background: var(--workspace);
+  background: transparent;
 }
+@supports selector(::-webkit-scrollbar) { * { scrollbar-width: auto; } }
 .skip-link { position: fixed; z-index: 100; left: var(--space-4); top: var(--space-4); transform: translateY(-200%); border-radius: var(--radius-md); background: var(--surface); padding: var(--space-3) var(--space-4); box-shadow: var(--shadow-2); }
 .skip-link:focus { transform: translateY(0); }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; } }
 
 .app-viewport { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; overflow: hidden; }
 .app-frame { display: flex; width: 100%; height: 100%; min-height: 0; overflow: hidden; border: 0; border-radius: 0; background: var(--surface); }
-.surface-panel { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow-1), var(--shadow-inset); }
+.surface-panel { min-width: 0; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow-1), var(--shadow-inset); }
 
 /* A single spring drives the hinge and the space released to the workspace. */
 .app-frame { --sidebar-space: 256px; --sidebar-angle: 0deg; --sidebar-blur: 0px; --sidebar-lift: 0; position: relative; isolation: isolate; }
@@ -112,19 +113,86 @@ a { text-decoration: none; }
   .fold-sidebar-contents { filter: none; }
 }
 
-.ui-floating[data-state="open"] { animation: floating-in 260ms var(--motion-soft) both; }
-.ui-floating[data-state="closed"] { animation: floating-out 160ms ease-in both; }
+.ui-floating { transform-origin: var(--radix-select-content-transform-origin, var(--radix-dropdown-menu-content-transform-origin, var(--radix-popover-content-transform-origin, top right))); }
+.ui-floating[data-state="open"] { animation: floating-in 420ms var(--motion-soft) both; }
+.ui-floating[data-state="closed"] { animation: floating-out 240ms ease-in both; }
 .ui-dialog-backdrop[data-state="open"] { animation: backdrop-in 300ms ease-out both; }
 .ui-dialog-backdrop[data-state="closed"] { animation: backdrop-in 200ms ease-in reverse both; }
 .ui-dialog-panel[data-state="open"] { animation: floating-in var(--motion-enter) var(--motion-soft) both; }
 .ui-dialog-panel[data-state="closed"] { animation: floating-out var(--motion-exit) ease-in both; }
 .ui-dialog-panel[data-side="left"] { height: 100dvh; max-height: none; }
-.ui-dialog-panel[data-side="left"][data-state="open"] { animation-name: drawer-in; }
-.ui-dialog-panel[data-side="left"][data-state="closed"] { animation: drawer-in 240ms var(--motion-soft) reverse both; }
+.ui-dialog-panel[data-side="left"][data-state="open"] { animation: drawer-in 560ms var(--motion-soft) both; }
+.ui-dialog-panel[data-side="left"][data-state="closed"] { animation: drawer-in 360ms var(--motion-soft) reverse both; }
 @keyframes floating-in { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes floating-out { from { opacity: 1; transform: translateY(0) scale(1); } to { opacity: 0; transform: translateY(4px) scale(.985); } }
 @keyframes backdrop-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes drawer-in { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+
+/* Shared micro interactions: state feedback throughout the authenticated workspace. */
+.route-enter > *, .tab-panel-enter[data-state="active"] { animation: page-reveal 460ms var(--motion-soft) both; }
+.route-enter > :nth-child(2) { animation-delay: 40ms; }
+.route-enter > :nth-child(3) { animation-delay: 80ms; }
+.route-enter > :nth-child(4) { animation-delay: 110ms; }
+.micro-button:active:not(:disabled) { transform: translateY(1px) scale(.97); }
+.micro-button { transform-origin: center; }
+.ui-floating [role^="menuitem"], .micro-menu-item { transition: background-color 220ms ease, color 220ms ease; }
+.ui-select-menu [role="option"] { transition: color 180ms ease; }
+[role="combobox"] > svg, [role="combobox"] [data-slot="chevron"], button[aria-haspopup] > svg:last-child { transition: rotate 420ms var(--motion-soft); }
+[role="combobox"][data-state="open"] > svg:last-child { rotate: 180deg; }
+.ui-tooltip[data-state="delayed-open"], .ui-tooltip[data-state="instant-open"] { animation: floating-in 240ms var(--motion-soft) both; }
+.ui-tooltip[data-state="closed"] { animation: floating-out 140ms ease-in both; }
+.notification-bell { transform-origin: 50% 15%; }
+button[data-state="open"] .notification-bell { animation: bell-ring 700ms var(--motion-soft) both; }
+.status-arc { transform-origin: center; animation: status-orbit 1100ms linear infinite; }
+.swipe-notification { touch-action: pan-x; }
+.toast-fuse { will-change: transform; }
+.spring-check-box { position: relative; isolation: isolate; transition: border-color 180ms; }
+.spring-check-box::before { content: ""; position: absolute; inset: -1px; z-index: -1; border-radius: inherit; background: var(--brand); transform: scale(0); transition: transform 320ms cubic-bezier(.2,1.5,.4,1); }
+.spring-check-box svg path { stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 260ms var(--motion-soft); }
+.spring-check input:checked + .spring-check-box { border-color: var(--brand); }
+.spring-check input:checked + .spring-check-box::before { transform: scale(1); }
+.spring-check input:checked + .spring-check-box svg path { stroke-dashoffset: 0; }
+.spring-check:active .spring-check-box { scale: .9; }
+.micro-radio > span { transform: scale(0); transition: transform 320ms cubic-bezier(.2,1.5,.4,1); }
+input:checked + .micro-radio { border-color: var(--brand); }
+input:checked + .micro-radio > span { transform: scale(1); }
+[role="switch"] > span { overflow: visible; transition: background-color 320ms, border-color 320ms; }
+.feedback-enter { animation: page-reveal 360ms var(--motion-soft) both; }
+.data-row-enter { animation: row-reveal 300ms var(--motion-soft) both; }
+.data-row-enter:nth-child(2), .timeline-entry:nth-child(2) { animation-delay: 25ms; }
+.data-row-enter:nth-child(3), .timeline-entry:nth-child(3) { animation-delay: 50ms; }
+.timeline-entry { animation: page-reveal 360ms var(--motion-soft) both; }
+.skeleton-shimmer { position: relative; overflow: hidden; }
+.skeleton-shimmer::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg,transparent 10%,var(--surface) 50%,transparent 90%); opacity: .5; animation: skeleton-sweep 1600ms ease-in-out infinite; }
+.sidebar-link > svg, .document-shortcut > :first-child, .dashboard-text-link svg { transition: transform 360ms var(--motion-soft); }
+@media (hover: hover) {
+  .sidebar-link:hover > svg { transform: translateX(2px); }
+  .document-shortcut:hover > :first-child { transform: translateY(-2px) rotate(-4deg); }
+  .dashboard-text-link:hover svg { transform: translateX(3px); }
+  .dashboard-metric { transition: transform 360ms var(--motion-soft), border-color 200ms, box-shadow 200ms; }
+  .dashboard-metric:hover { transform: translateY(-3px); }
+}
+@keyframes page-reveal { from { opacity: .25; translate: 0 8px; } to { opacity: 1; translate: 0 0; } }
+@keyframes bell-ring { 0%,100% { rotate: 0deg; } 15% { rotate: 14deg; } 35% { rotate: -12deg; } 55% { rotate: 7deg; } 75% { rotate: -3deg; } }
+@keyframes status-orbit { to { transform: rotate(360deg); } }
+@keyframes skeleton-sweep { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+@keyframes row-reveal { from { opacity: .35; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .route-enter > *, .tab-panel-enter[data-state="active"], .feedback-enter { animation: none; }
+  .skeleton-shimmer::after { display: none; }
+  .micro-button:active:not(:disabled), .sidebar-link:hover > svg, .document-shortcut:hover > :first-child, .dashboard-text-link:hover svg, .dashboard-metric:hover { transform: none; }
+  .toast-fuse { visibility: hidden; }
+}
+@media (forced-colors: active) {
+  * { scrollbar-color: auto; }
+  .micro-tab-thumb, .micro-option-thumb { border: 1px solid Highlight; }
+  .spring-check input:checked + .spring-check-box { background: Highlight; color: HighlightText; }
+  .spring-check-box svg { color: HighlightText; }
+  .spring-check-box::before { background: Highlight; }
+  input:checked + .micro-radio > span { background: Highlight; }
+  [role="switch"][aria-checked="true"] > span { background: Highlight; }
+  [role="switch"] > span > span { border: 1px solid ButtonText; background: Canvas; }
+}
 
 .dashboard-overview { max-width: 1600px; margin: 0 auto; }
 .dashboard-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }

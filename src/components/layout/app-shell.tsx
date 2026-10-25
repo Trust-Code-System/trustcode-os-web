@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bell, ChevronRight, CircleHelp, Menu, PanelLeft, Search } from "lucide-react";
+import { ChevronRight, CircleHelp, Menu, PanelLeft, Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
@@ -9,6 +9,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { BrandMark, BrandWordmark } from "@/components/brand/brand-logo";
 import { Avatar } from "@/components/ui/data-display";
 import { IconButton } from "@/components/ui/button";
+import { NotificationBell } from "@/components/ui/micro-motion";
 import { CommandMenu } from "@/components/ui/navigation";
 import {
   Dialog,
@@ -155,7 +156,7 @@ export function AppShell({
               label="Notifications"
               trigger={
                 <IconButton aria-label="Notifications">
-                  <Bell aria-hidden className="size-4" />
+                  <NotificationBell />
                 </IconButton>
               }
             >

@@ -1,8 +1,11 @@
 "use client";
 
+import { useMotionPreference } from "@/lib/hooks/use-motion-preference";
+
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { Check, ChevronDown, ChevronUp, Search } from "lucide-react";
+import { motion } from "motion/react";
 import {
   Children,
   forwardRef,
@@ -15,6 +18,7 @@ import {
 } from "react";
 
 import { cn } from "@/lib/utils/cn";
+import { SquishThumb, microSpring } from "./micro-motion";
 
 const fieldClass =
   "min-h-9 w-full rounded-[var(--radius-md)] border border-border bg-surface px-3 text-sm text-text-primary shadow-[var(--shadow-inset)] placeholder:text-text-muted hover:border-border-strong focus:border-focus focus:outline-none focus:ring-2 focus:ring-focus/15 disabled:cursor-not-allowed disabled:opacity-50 aria-[invalid=true]:border-danger aria-[invalid=true]:ring-2 aria-[invalid=true]:ring-danger/20";
@@ -98,6 +102,9 @@ export function Select({
   "aria-describedby"?: string;
 }) {
   const options = optionsFrom(children);
+  const [highlighted, setHighlighted] = useState<string | null>(null);
+  const highlightId = useId();
+  const reduce = useMotionPreference();
   return (
     <SelectPrimitive.Root
       {...(value !== undefined ? { value: encodeValue(value) } : {})}
@@ -108,6 +115,7 @@ export function Select({
       {...(required !== undefined ? { required } : {})}
       {...(name !== undefined ? { name } : {})}
       onValueChange={(next) => onValueChange?.(decodeValue(next))}
+      onOpenChange={() => setHighlighted(null)}
     >
       <SelectPrimitive.Trigger
         id={id}
@@ -133,19 +141,22 @@ export function Select({
           position="popper"
           sideOffset={5}
           collisionPadding={8}
-          className="z-[100] max-h-[min(20rem,var(--radix-select-content-available-height))] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-[var(--radius-md)] border border-border bg-surface-elevated p-1 shadow-[var(--shadow-2)]"
+          className="ui-floating ui-select-menu z-[100] max-h-[min(20rem,var(--radix-select-content-available-height))] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-[var(--radius-md)] border border-border bg-surface-elevated p-1 shadow-[var(--shadow-2)]"
         >
           <SelectPrimitive.ScrollUpButton className="flex h-7 items-center justify-center text-text-muted">
             <ChevronUp aria-hidden className="size-4" />
           </SelectPrimitive.ScrollUpButton>
-          <SelectPrimitive.Viewport>
+          <SelectPrimitive.Viewport className="relative isolate">
             {options.map((option) => (
               <SelectPrimitive.Item
                 key={option.value || emptyValue}
                 value={encodeValue(option.value) ?? emptyValue}
                 disabled={option.disabled}
-                className="relative flex min-h-9 cursor-default select-none items-center rounded-[var(--radius-sm)] py-2 pl-8 pr-3 text-sm text-text-primary outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-45 data-[highlighted]:bg-surface-active data-[highlighted]:text-brand data-[state=checked]:font-semibold data-[state=checked]:text-brand"
+                onFocus={() => setHighlighted(option.value)}
+                onPointerMove={() => { if (!option.disabled) setHighlighted(option.value); }}
+                className="relative flex min-h-10 cursor-default select-none items-center rounded-[var(--radius-sm)] py-2 pl-8 pr-3 text-sm text-text-primary outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-45 data-[highlighted]:text-brand data-[state=checked]:font-semibold data-[state=checked]:text-brand"
               >
+                {highlighted === option.value ? <motion.span aria-hidden data-micro="glide-select" layoutId={`${highlightId}-option`} className="micro-option-thumb pointer-events-none absolute inset-0 -z-10 rounded-[var(--radius-sm)] bg-surface-active" transition={reduce ? { duration: 0 } : microSpring} /> : null}
                 <SelectPrimitive.ItemIndicator className="absolute left-2.5 grid place-items-center">
                   <Check aria-hidden className="size-4" />
                 </SelectPrimitive.ItemIndicator>
@@ -218,7 +229,7 @@ export function MultiSelect({
         <DropdownMenuPrimitive.Content
           sideOffset={5}
           collisionPadding={8}
-          className="z-[100] min-w-[var(--radix-dropdown-menu-trigger-width)] rounded-[var(--radius-md)] border border-border bg-surface-elevated p-1 shadow-[var(--shadow-2)]"
+          className="ui-floating z-[100] max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-[var(--radix-dropdown-menu-trigger-width)] overflow-y-auto rounded-[var(--radius-md)] border border-border bg-surface-elevated p-1 shadow-[var(--shadow-2)]"
         >
           {options.map((option) => (
             <DropdownMenuPrimitive.CheckboxItem
@@ -229,7 +240,7 @@ export function MultiSelect({
                 update(option.value, checked === true)
               }
               onSelect={(event) => event.preventDefault()}
-              className="relative flex min-h-9 cursor-default select-none items-center rounded-[var(--radius-sm)] py-2 pl-8 pr-3 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-45 data-[highlighted]:bg-surface-active data-[highlighted]:text-brand"
+              className="micro-menu-item relative flex min-h-10 cursor-default select-none items-center rounded-[var(--radius-sm)] py-2 pl-8 pr-3 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-45 data-[highlighted]:bg-surface-active data-[highlighted]:text-brand"
             >
               <DropdownMenuPrimitive.ItemIndicator className="absolute left-2.5">
                 <Check aria-hidden className="size-4" />
@@ -267,16 +278,16 @@ export function Checkbox({
   return (
     <label
       className={cn(
-        "inline-flex min-h-10 cursor-pointer items-center gap-2 text-sm",
+        "spring-check inline-flex min-h-10 cursor-pointer items-center gap-2 text-sm",
         className,
       )}
     >
       <input type="checkbox" className="peer sr-only" {...props} />
       <span
         aria-hidden
-        className="grid size-5 place-items-center rounded border border-border-strong bg-surface peer-checked:border-brand peer-checked:bg-brand peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-focus peer-disabled:opacity-50"
+        className="spring-check-box grid size-5 shrink-0 place-items-center rounded border border-border-strong bg-surface peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-focus peer-disabled:opacity-50"
       >
-        <Check className="size-3.5 text-brand-contrast opacity-0 peer-checked:opacity-100" />
+        <svg aria-hidden className="relative size-3.5 text-brand-contrast" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path pathLength="1" d="M5 12 10 17 20 7" /></svg>
       </span>
       <span>{label}</span>
     </label>
@@ -295,7 +306,8 @@ export function Radio({
         className,
       )}
     >
-      <input type="radio" className="size-5 accent-[var(--brand)]" {...props} />
+      <input type="radio" className="peer sr-only" {...props} />
+      <span aria-hidden className="micro-radio grid size-5 shrink-0 place-items-center rounded-full border border-border-strong bg-surface peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-focus peer-disabled:opacity-50"><span className="size-2.5 rounded-full bg-brand" /></span>
       <span>{label}</span>
     </label>
   );
@@ -329,12 +341,7 @@ export function Switch({
             : "border-border-strong bg-surface-hover",
         )}
       >
-        <span
-          className={cn(
-            "size-4 rounded-full bg-white shadow transition-transform",
-            checked && "translate-x-5",
-          )}
-        />
+        <SquishThumb checked={checked} />
       </span>
       {label}
     </button>

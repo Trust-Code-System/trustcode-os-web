@@ -22,7 +22,7 @@ test("soft fold supports focus, reversal, dragging and reduced motion", async ({
     const sample = () => {
       const node = document.querySelector<HTMLElement>(".app-frame")!;
       samples.push({ progress: Number(node.dataset.sidebarProgress), blur: parseFloat(node.style.getPropertyValue("--sidebar-blur")), time: performance.now() - started });
-      if (performance.now() - started < 1100) requestAnimationFrame(sample); else resolve(samples);
+      if (performance.now() - started < 1900) requestAnimationFrame(sample); else resolve(samples);
     };
     requestAnimationFrame(sample);
   }));
@@ -34,6 +34,8 @@ test("soft fold supports focus, reversal, dragging and reduced motion", async ({
   const samples = await recording;
   await writeFile(testInfo.outputPath("fold-trajectory.json"), JSON.stringify(samples, null, 2));
   expect(samples.some((sample) => sample.progress > 0.1 && sample.progress < 0.9 && sample.blur > 1)).toBe(true);
+  const middle = samples.filter((sample) => sample.progress > 0.1 && sample.progress < 0.9);
+  expect(middle.at(-1)!.time - middle[0]!.time).toBeGreaterThan(250);
   await testInfo.attach("fold-trajectory.json", { body: JSON.stringify(samples), contentType: "application/json" });
   expect((await main.boundingBox())!.width).toBeGreaterThan(open!.width + 250);
   await page.screenshot({ path: testInfo.outputPath("dashboard-folded.png") });

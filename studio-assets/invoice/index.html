@@ -55,7 +55,10 @@
 :root{--ui-bg:#f3f5f9;--ui-surface:#fff;--ui-ink:#101c35;--ui-muted:#56647b;--ui-soft:#eef3fb;--ui-line:#dce3ed;--ui-blue:#073dc8;--ui-blue-hover:#0632a4;--ui-blue-soft:#eaf0ff;--ui-error:#a52332;--ui-error-bg:#fff2f3;--ui-green:#21664a;--ui-shadow:0 2px 8px #13274c05,0 16px 48px #13274c08;--ui-menu-shadow:0 4px 16px #13274c14,0 20px 56px #13274c14;--ui-radius:12px;--ui-radius-sm:8px;--ui-space:8px;--ui-ease:cubic-bezier(.2,.7,.3,1);--ui-header-layer:30;--ui-menu-layer:40;--ui-actions-layer:35;--ui-popup-layer:50;--ui-scroll:#aab6c8;--ui-control-border:#8392ab;--ui-border-hover:#56647b;--ui-button-shadow:0 1px 2px #13274c04;--ui-selected-shadow:0 1px 4px #13274c0f;--ui-actions-shadow:0 -8px 24px #13274c06;--ui-backdrop:#101c3599;--ui-radius-xs:4px;--ui-radius-menu:6px;--ui-radius-inner:7px;--ui-radius-lg:16px;color-scheme:light--ui-space-2xs:2px;--ui-space-xs:4px;--ui-space-compact:6px;--ui-space-sm:8px;--ui-space-snug:10px;--ui-space-md:12px;--ui-space-lg:16px;--ui-space-xl:20px;--ui-space-2xl:24px;--ui-space-3xl:28px;--ui-space-4xl:32px;--ui-space-5xl:36px;--ui-space-6xl:40px;--ui-space-7xl:48px;}
 @media screen{
 body{background:var(--ui-bg);padding-bottom:calc(92px + env(safe-area-inset-bottom));-webkit-font-smoothing:antialiased;color:var(--ui-ink)}
-*{scrollbar-width:thin;scrollbar-color:var(--ui-scroll) var(--ui-bg)}
+*{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--ui-blue) 48%,transparent) transparent}
+@supports selector(::-webkit-scrollbar){*{scrollbar-width:auto}}
+*::-webkit-scrollbar{width:4px;height:4px}*::-webkit-scrollbar-track{background:transparent}*::-webkit-scrollbar-thumb{border-radius:10px;background:color-mix(in srgb,var(--ui-blue) 48%,transparent)}*::-webkit-scrollbar-thumb:hover{background:var(--ui-blue)}
+@media(forced-colors:active){*{scrollbar-color:auto}}
 button,a,input,textarea{touch-action:manipulation}button,a{-webkit-tap-highlight-color:transparent}
 button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var(--ui-blue);outline-offset:4px}
 .appbar{position:sticky;top:0;z-index:var(--ui-header-layer);background:var(--ui-surface)!important;color:var(--ui-ink)!important;border-bottom:1px solid var(--ui-line);min-height:72px;padding:var(--ui-space-md) var(--ui-space-lg)!important;flex-wrap:nowrap!important;gap:var(--ui-space-sm)!important}
