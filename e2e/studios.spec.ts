@@ -12,7 +12,7 @@ test("document editors and files require a session", async ({ page, request }) =
   expect((await request.get("/api/studios/invoice/index.html", { headers: { Cookie: `tc_session_user=${forged}` } })).status()).toBe(401);
 });
 
-test("both studios work inside Documents across phone and desktop widths", async ({ page, context }, testInfo) => {
+test("both studio workspaces work across phone and desktop widths", async ({ page, context }, testInfo) => {
   test.setTimeout(120_000);
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
@@ -25,14 +25,12 @@ test("both studios work inside Documents across phone and desktop widths", async
 
   for (const [kind, route] of [["invoice", "invoices"], ["contract", "contracts"]] as const) {
     await page.goto(`/documents/${route}`);
-    const frame = page.frameLocator("iframe");
+    const frame = page;
     await expect(frame.locator(".appbar")).toBeVisible();
     if (kind === "contract") await expect(frame.locator("html")).toHaveAttribute("data-micro", "react-bits");
     for (const width of [320, 375, 768, 1440]) {
       await page.setViewportSize({ width, height: width < 600 ? 812 : 1000 });
       expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), `${route} shell ${width}px`).toBe(false);
-      const bounds = await page.locator("iframe").boundingBox();
-      expect(bounds?.height).toBeGreaterThan(300);
       const inner = await frame.locator("html").evaluate((element) => ({ scroll: element.scrollWidth, width: innerWidth }));
       expect(inner.scroll, `${route} editor ${width}px`).toBeLessThanOrEqual(inner.width);
       if (width === 375 || width === 1440) await page.screenshot({ path: testInfo.outputPath(`${kind}-${width}.png`) });

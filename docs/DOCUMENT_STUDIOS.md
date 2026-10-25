@@ -1,6 +1,6 @@
 # Document studios
 
-The Documents module contains Invoice Studio (`/documents/invoices`) and Contract Studio (`/documents/contracts`). Both use TrustCode OS sign-in. Contract Studio supports service agreements and mutual NDAs. The existing branded editors, responsive layouts, animated controls, original logo and exports are preserved.
+The Documents module contains Invoice Studio (`/documents/invoices`) and Contract Studio (`/documents/contracts`). Both use TrustCode OS sign-in and open as full-page workspaces with a brand link back to Documents. Contract Studio supports service agreements and mutual or one-way NDAs. The existing branded editors, responsive layouts, animated controls, original logo and exports are preserved. Full-page delivery avoids browser embedding issues and gives phone users the complete viewport.
 
 ## Access and storage
 
@@ -26,7 +26,7 @@ pnpm build
 
 Commit the rebuilt `studio-assets/*/index.html` alongside source changes. The standalone React island build is isolated from the OS application dependencies. Its registry provenance and license notices remain in `studios/contracts/reactbits` and the generated bundle; JSZip's MIT license is in `studios/shared`.
 
-The Playwright configuration uses the repository's explicit development mock mode and synthetic accounts. Production studio routes fail closed if mock mode is accidentally enabled. Unit tests cover bearer validation, refresh, role checks, file allowlists and cache headers. Browser tests cover anonymous access, phone/desktop iframe layout and all seven template downloads.
+The Playwright configuration uses the repository's explicit development mock mode and synthetic accounts. Production studio routes fail closed if mock mode is accidentally enabled. Unit tests cover bearer validation, refresh, role checks, file allowlists and cache headers. Browser tests cover anonymous access, phone/desktop workspace layouts and all seven template downloads.
 
 ## Deployment
 
