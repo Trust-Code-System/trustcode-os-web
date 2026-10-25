@@ -34,4 +34,6 @@ pnpm test:e2e
 
 Invoice Studio and Contract Studio now live under **Documents**, behind the existing staff sign-in. See `docs/DOCUMENT_STUDIOS.md` for source locations, rebuild instructions, access checks and export behavior.
 
+See `docs/SOFT_FOLD_WORKSPACE.md` for sidebar controls, workspace design decisions, source references and motion verification.
+
 Start with `docs/STITCH_IMPLEMENTATION_PLAN.md`, `docs/FRONTEND_MASTER_PLAN.md`, `docs/API_CONTRACTS.md`, `docs/ARCHITECTURE.md`, and `docs/HANDOFF.md`. `docs/FRONTEND_TODO.md` is the source of truth for delivery status.
