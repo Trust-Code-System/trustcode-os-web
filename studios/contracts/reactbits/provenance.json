@@ -1,0 +1,22 @@
+{
+  "repository": "https://github.com/DavidHDev/react-bits",
+  "commit": "e12c22192ac7b4b452c5e2feb9b586d74765d696",
+  "license": "MIT + Commons Clause",
+  "components": [
+    {
+      "name": "RubberSegment",
+      "registry": "public/r/RubberSegment-JS-CSS.json",
+      "sha256": "dd938ada85600efc4584cba1f9b6dc15fd645dfc5d4fe134c1f53ed1fcf1049a"
+    },
+    {
+      "name": "SwipeToast",
+      "registry": "public/r/SwipeToast-JS-CSS.json",
+      "sha256": "236de0dc2a7f2f9e83c3601fb7181c2be52f20b9d7e530d38172ae6dc7072bff"
+    },
+    {
+      "name": "StatusMark",
+      "registry": "public/r/StatusMark-JS-CSS.json",
+      "sha256": "702ecb289c082431602f240173cd048c6e6b5e43c3835d776d094e5db5461075"
+    }
+  ]
+}

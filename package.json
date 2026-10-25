@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "build:studios": "node scripts/build-studios.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
