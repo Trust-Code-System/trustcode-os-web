@@ -13,6 +13,10 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     "public/mockServiceWorker.js",
+    // Standalone browser applications are built and exercised separately.
+    "studios/**",
+    "studio-assets/**",
+    ".studio-build/**",
   ]),
 ]);
 
