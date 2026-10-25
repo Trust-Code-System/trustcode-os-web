@@ -33,6 +33,9 @@ button, input, textarea, select { font: inherit; }
 a { text-decoration: none; }
 ::selection { background: var(--surface-active); }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+/* Text fields signal focus through their surface instead of a surrounding box. */
+input:not([type="checkbox"]):not([type="radio"]):focus,
+textarea:focus { outline: none; background-color: var(--surface-hover); }
 .brand-wordmark-dark, .theme-icon-dark { display: none; }
 :root[data-theme="dark"] .brand-wordmark-light, :root[data-theme="dark"] .theme-icon-light { display: none; }
 :root[data-theme="dark"] .brand-wordmark-dark, :root[data-theme="dark"] .theme-icon-dark { display: block; }
@@ -259,6 +262,9 @@ html[data-transition-kind="theme"]::view-transition-old(root) { z-index: 1; }
 }
 @media (forced-colors: active) {
   * { scrollbar-color: auto; }
+  :focus-visible,
+  input:not([type="checkbox"]):not([type="radio"]):focus,
+  textarea:focus { outline: 2px solid Highlight; outline-offset: 2px; }
   .micro-tab-thumb, .micro-option-thumb { border: 1px solid Highlight; }
   .spring-check input:checked + .spring-check-box { background: Highlight; color: HighlightText; }
   .spring-check-box svg { color: HighlightText; }
