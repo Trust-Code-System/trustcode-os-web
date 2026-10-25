@@ -4,6 +4,8 @@ const nextConfig: NextConfig = {
   turbopack: { root: process.cwd() },
   outputFileTracingIncludes: {
     "/api/studios/*": ["./studio-assets/**/*"],
+    "/documents/invoices": ["./studio-assets/invoice/**/*"],
+    "/documents/contracts": ["./studio-assets/contract/**/*"],
   },
   async headers() {
     return [

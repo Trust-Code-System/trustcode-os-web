@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { ArrowUpRight, FileSignature, ReceiptText } from "lucide-react";
 
 import { Alert } from "@/components/ui/feedback";
@@ -22,7 +21,7 @@ export default async function DocumentsPage() {
           <div className="flex items-start justify-between"><div className="grid size-11 place-items-center rounded-xl bg-brand/10 text-brand"><Icon className="size-5" aria-hidden /></div><span className="rounded-full border border-border px-2.5 py-1 text-[10px] font-medium text-text-muted">Team workspace</span></div>
           <div><h2 className="text-xl font-semibold tracking-tight">{studio.title}</h2><p className="mt-2 max-w-lg text-sm leading-6 text-text-secondary">{studio.description}</p></div>
           <p className="text-xs text-text-muted">{kind === "invoice" ? "PDF, Word and Excel templates · Flexible payment terms" : "PDF and editable Word · Service agreements and NDAs"}</p>
-          <Link href={studio.href} className={buttonVariants({ className: "mt-auto w-fit min-h-11" })}>Open {studio.title.toLowerCase()} <ArrowUpRight className="size-4" aria-hidden /></Link>
+          <a href={studio.href} className={buttonVariants({ className: "mt-auto w-fit min-h-11" })}>Open {studio.title.toLowerCase()} <ArrowUpRight className="size-4" aria-hidden /></a>
         </section>;
       })}
     </div>
