@@ -35,7 +35,8 @@ export function useFoldingSidebar() {
     }
     model.last = performance.now();
     const tick = (now: number) => {
-      const delta = Math.min((now - model.last) / 1000, 0.064);
+      // Half-speed spring time preserves the soft fold and velocity on reversal.
+      const delta = Math.min((now - model.last) / 1000, 0.064) * 0.48;
       model.last = now;
       const next = advanceSidebar(model.position, model.velocity, model.target, delta);
       model.position = next.position;

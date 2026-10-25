@@ -16,3 +16,7 @@ input,textarea{font-weight:500}.paper{font-variant-ligatures:none;font-feature-s
 @page{@bottom-right{content:"Page " counter(page) " / " counter(pages);font:8pt Arial,sans-serif;color:#56647b}}
 
 @media print{.paper[data-kind=nda]{line-height:1.5}.paper[data-kind=nda] .doc-section{margin-bottom:10pt}.paper[data-kind=nda] .paper-brand{margin-bottom:16pt}.signature-intro{break-after:avoid}}
+
+/* Thin branded scrollbars across the editor, menus and preview. */
+@media screen{*{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--blue) 48%,transparent) transparent}@supports selector(::-webkit-scrollbar){*{scrollbar-width:auto}}*::-webkit-scrollbar{width:4px;height:4px}*::-webkit-scrollbar-track{background:transparent}*::-webkit-scrollbar-thumb{border-radius:10px;background:color-mix(in srgb,var(--blue) 48%,transparent)}*::-webkit-scrollbar-thumb:hover{background:var(--blue)}}
+@media(forced-colors:active){*{scrollbar-color:auto}}
