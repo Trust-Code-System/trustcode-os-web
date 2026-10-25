@@ -18,7 +18,9 @@ test("shared selects replace native dropdowns and support keyboard selection", a
   await status.focus();
   await page.keyboard.press("Enter");
   await expect(page.getByRole("listbox")).toBeVisible();
+  await expect(page.getByRole("option", { name: "All statuses", exact: true })).toBeFocused();
   await page.keyboard.press("ArrowDown");
+  await expect(page.getByRole("option", { name: "Active", exact: true })).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/status=/);
 

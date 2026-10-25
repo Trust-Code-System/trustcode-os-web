@@ -11,6 +11,9 @@ const fonts = await text("studios/shared/fonts.css");
 const logo = (await readFile(path.join(root, "studios/shared/logo.png"))).toString("base64");
 const dropdown = await text("studios/shared/dropdown.js");
 const app = (await text("studios/contracts/app.js")).replace("__DROPDOWN__", () => dropdown);
+const themeBootstrap = (await text("src/lib/ui/theme-bootstrap.ts")).match(/themeBootstrap = `([^`]+)`/)?.[1];
+if (!themeBootstrap) throw new Error("Shared theme bootstrap missing");
+const themeCss = await text("studios/shared/theme.css");
 
 for (const kind of ["invoice", "contract"]) {
   let html = await text(kind === "invoice" ? "studios/invoice/index.template.html" : "studios/contracts/index.template.html");
@@ -35,6 +38,8 @@ for (const kind of ["invoice", "contract"]) {
   header = header.replaceAll('href="https://invoice.trustcodesystem.tech/"', 'href="/documents/invoices" target="_top"');
   header = header.replaceAll('href="https://contracts.trustcodesystem.tech/"', 'href="/documents/contracts" target="_top"');
   html = html.slice(0, headerStart) + header + html.slice(headerEnd);
+  html = html.replace('<html lang="en"', () => `<html lang="en" data-studio="${kind}"`);
+  html = html.replace("</head>", () => `<style>${themeCss}</style><script>${themeBootstrap};addEventListener('storage',()=>{${themeBootstrap}});matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{${themeBootstrap}})</script></head>`);
   await writeFile(path.join(root, "studio-assets", kind, "index.html"), html);
   console.log(`Built authenticated ${kind} studio (${Buffer.byteLength(html)} bytes)`);
 }

@@ -20,7 +20,7 @@ export function ForgotPasswordForm() {
   const form = useForm<Values>({ resolver: zodResolver(forgotPasswordSchema), defaultValues: { email: "" } });
   const request = useMutation({ mutationFn: (values: Values) => authApi.forgotPassword(values.email) });
   if (request.isSuccess) return <Alert variant="success" title="Check your inbox">If the address belongs to an account, a password-reset link has been sent. <Link className="underline" href="/login">Return to sign in</Link>.</Alert>;
-  return <form className="grid gap-5" onSubmit={form.handleSubmit((values) => request.mutate(values))} noValidate>{request.error ? <Alert variant="danger" title="Request failed">{toAppError(request.error).message}</Alert> : null}<FormField label="Email address" htmlFor="email" error={form.formState.errors.email?.message}><Input id="email" type="email" autoComplete="email" {...form.register("email")} /></FormField><Button type="submit" loading={request.isPending} className="bg-white text-brand shadow-none hover:bg-white/90 hover:text-brand">Send reset link</Button></form>;
+  return <form className="grid gap-5" onSubmit={form.handleSubmit((values) => request.mutate(values))} noValidate>{request.error ? <Alert variant="danger" title="Request failed">{toAppError(request.error).message}</Alert> : null}<FormField label="Email address" htmlFor="email" error={form.formState.errors.email?.message}><Input id="email" type="email" autoComplete="email" {...form.register("email")} /></FormField><Button type="submit" loading={request.isPending} className="min-h-12">Send reset link</Button></form>;
 }
 
 export function ResetPasswordForm() {
@@ -29,7 +29,7 @@ export function ResetPasswordForm() {
   const form = useForm<Values>({ resolver: zodResolver(resetPasswordSchema), defaultValues: { token, password: "" } });
   const reset = useMutation({ mutationFn: (values: Values) => authApi.resetPassword(values.token, values.password) });
   if (reset.isSuccess) return <Alert variant="success" title="Password updated">You can now <Link className="underline" href="/login">sign in with your new password</Link>.</Alert>;
-  return <form className="grid gap-5" onSubmit={form.handleSubmit((values) => reset.mutate(values))} noValidate>{!token ? <Alert variant="danger" title="Invalid reset link">The link does not include a reset token.</Alert> : null}{reset.error ? <Alert variant="danger" title="Reset failed">{toAppError(reset.error).message}</Alert> : null}<input type="hidden" {...form.register("token")} /><FormField label="New password" htmlFor="password" description="Use at least 12 characters." error={form.formState.errors.password?.message}><Input id="password" type="password" autoComplete="new-password" {...form.register("password")} /></FormField><Button type="submit" loading={reset.isPending} disabled={!token} className="bg-white text-brand shadow-none hover:bg-white/90 hover:text-brand">Set new password</Button></form>;
+  return <form className="grid gap-5" onSubmit={form.handleSubmit((values) => reset.mutate(values))} noValidate>{!token ? <Alert variant="danger" title="Invalid reset link">The link does not include a reset token.</Alert> : null}{reset.error ? <Alert variant="danger" title="Reset failed">{toAppError(reset.error).message}</Alert> : null}<input type="hidden" {...form.register("token")} /><FormField label="New password" htmlFor="password" description="Use at least 12 characters." error={form.formState.errors.password?.message}><Input id="password" type="password" autoComplete="new-password" {...form.register("password")} /></FormField><Button type="submit" loading={reset.isPending} disabled={!token} className="min-h-12">Set new password</Button></form>;
 }
 
 export function AcceptInviteForm() {
@@ -39,7 +39,7 @@ export function AcceptInviteForm() {
   const accept = useMutation({ mutationFn: (values: Values) => authApi.acceptInvitation(values.token, values.password) });
   // Accepting an invitation creates the account already verified, so the next step is a normal sign in.
   if (accept.isSuccess) return <Alert variant="success" title="Account activated">Your account is ready. <Link className="underline" href="/login">Sign in to continue</Link>.</Alert>;
-  return <form className="grid gap-5" onSubmit={form.handleSubmit((values) => accept.mutate(values))} noValidate>{!token ? <Alert variant="danger" title="Invalid invitation link">The link does not include an invitation token.</Alert> : null}{accept.error ? <Alert variant="danger" title="Invitation could not be accepted">{toAppError(accept.error).message}</Alert> : null}<input type="hidden" {...form.register("token")} /><FormField label="Create password" htmlFor="password" description="Use at least 12 characters." error={form.formState.errors.password?.message}><Input id="password" type="password" autoComplete="new-password" {...form.register("password")} /></FormField><Button type="submit" loading={accept.isPending} disabled={!token} className="bg-white text-brand shadow-none hover:bg-white/90 hover:text-brand">Activate account</Button></form>;
+  return <form className="grid gap-5" onSubmit={form.handleSubmit((values) => accept.mutate(values))} noValidate>{!token ? <Alert variant="danger" title="Invalid invitation link">The link does not include an invitation token.</Alert> : null}{accept.error ? <Alert variant="danger" title="Invitation could not be accepted">{toAppError(accept.error).message}</Alert> : null}<input type="hidden" {...form.register("token")} /><FormField label="Create password" htmlFor="password" description="Use at least 12 characters." error={form.formState.errors.password?.message}><Input id="password" type="password" autoComplete="new-password" {...form.register("password")} /></FormField><Button type="submit" loading={accept.isPending} disabled={!token} className="min-h-12">Activate account</Button></form>;
 }
 
 export function VerifyEmailForm() {
@@ -56,13 +56,13 @@ export function VerifyEmailForm() {
   }, [token, verify]);
 
   if (!token) return <Alert variant="danger" title="Invalid verification link">The link does not include a verification token.</Alert>;
-  if (verify.isPending || verify.isIdle) return <p className="text-sm text-white/80">Verifying your email address…</p>;
+  if (verify.isPending || verify.isIdle) return <p className="text-sm text-text-secondary">Verifying your email address…</p>;
   if (verify.isSuccess) return <Alert variant="success" title="Email verified">Your address is confirmed. <Link className="underline" href="/login">Sign in to continue</Link>.</Alert>;
   return (
     <div className="grid gap-5">
       <Alert variant="danger" title="Verification failed">{toAppError(verify.error).message}</Alert>
       {resend.error ? <Alert variant="danger" title="Could not resend verification">{toAppError(resend.error).message}</Alert> : null}
-      {resend.isSuccess ? <Alert variant="success" title="Check your inbox">If the address still needs verification, a new link has been sent.</Alert> : <form className="grid gap-5" onSubmit={(event) => { event.preventDefault(); resend.mutate(email); }} noValidate><FormField label="Email address" htmlFor="resend-email" description="We will send a fresh verification link."><Input id="resend-email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></FormField><Button type="submit" loading={resend.isPending} className="bg-white text-brand shadow-none hover:bg-white/90 hover:text-brand">Send a new link</Button></form>}
+      {resend.isSuccess ? <Alert variant="success" title="Check your inbox">If the address still needs verification, a new link has been sent.</Alert> : <form className="grid gap-5" onSubmit={(event) => { event.preventDefault(); resend.mutate(email); }} noValidate><FormField label="Email address" htmlFor="resend-email" description="We will send a fresh verification link."><Input id="resend-email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></FormField><Button type="submit" loading={resend.isPending} className="min-h-12">Send a new link</Button></form>}
     </div>
   );
 }

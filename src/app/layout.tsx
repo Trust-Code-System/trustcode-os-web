@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 
 import { Providers } from "./providers";
 import "./globals.css";
+import { themeBootstrap } from "@/lib/ui/theme-bootstrap";
 
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope" });
 const jetbrains = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains" });
@@ -17,6 +18,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
   return (
     <html lang="en" className={`${manrope.variable} ${jetbrains.variable}`} suppressHydrationWarning>
       <body>
+        <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
         <a className="skip-link" href="#main-content">Skip to main content</a>
         <Providers>{children}</Providers>
       </body>

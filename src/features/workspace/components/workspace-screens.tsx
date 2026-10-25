@@ -12,6 +12,7 @@ import { FormField, Input, Select, Textarea } from "@/components/ui/form-control
 import { PageHeader, Pagination, SectionHeader } from "@/components/ui/navigation";
 import { Tabs } from "@/components/ui/overlays";
 import { toAppError } from "@/lib/errors/app-error";
+import { DashboardGreeting } from "./dashboard-greeting";
 import { studioCatalog } from "@/features/studios/catalog";
 import { refreshAppData } from "@/lib/query/cache";
 import {
@@ -57,7 +58,7 @@ export function DashboardScreen() {
     { label: "Upcoming meetings", value: meetings.length, hint: "On your schedule", icon: CalendarDays, href: "/meetings" },
   ];
   return <div className="dashboard-overview">
-    <PageHeader eyebrow="Workspace overview" title="Dashboard" description="A clear view of your clients, delivery and what comes next." actions={<>
+    <PageHeader eyebrow="Workspace overview" title="Dashboard" description={<DashboardGreeting />} actions={<>
       <Link href="/projects" className={buttonVariants({ variant: "secondary", size: "sm", className: "min-h-10" })}>View projects <ArrowUpRight aria-hidden className="size-3.5" /></Link>
       <a href={studioCatalog.invoice.href} className={buttonVariants({ size: "sm", className: "min-h-10" })}><Plus aria-hidden className="size-3.5" />Create invoice</a>
     </>} />

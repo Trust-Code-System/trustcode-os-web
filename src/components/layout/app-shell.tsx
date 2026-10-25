@@ -10,6 +10,7 @@ import { BrandMark, BrandWordmark } from "@/components/brand/brand-logo";
 import { Avatar } from "@/components/ui/data-display";
 import { IconButton } from "@/components/ui/button";
 import { NotificationBell } from "@/components/ui/micro-motion";
+import { ThemeSwitcher } from "@/components/theme/theme-switcher";
 import { CommandMenu } from "@/components/ui/navigation";
 import {
   Dialog,
@@ -136,7 +137,7 @@ export function AppShell({
               className="inline-flex shrink-0 items-center gap-1.5 lg:hidden"
             >
               <BrandMark className="lg:hidden" />
-              <BrandWordmark className="hidden h-8 w-auto min-[400px]:block sm:h-9" />
+              <BrandWordmark className="hidden h-8 w-auto min-[480px]:block sm:h-9" />
             </Link>
             <button
               type="button"
@@ -152,6 +153,7 @@ export function AppShell({
                 ⌘K
               </kbd>
             </button>
+            <ThemeSwitcher />
             <Popover
               label="Notifications"
               trigger={

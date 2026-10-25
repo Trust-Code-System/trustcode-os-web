@@ -20,7 +20,7 @@ export function Dialog({ trigger, title, description, children, open, onOpenChan
 }
 
 export function ConfirmationDialog({ trigger, title, description, confirmLabel, onConfirm }: { trigger: ReactNode; title: string; description: string; confirmLabel: string; onConfirm: () => void }) {
-  return <Dialog trigger={trigger} title={title} description={description}><DialogPrimitive.Close className="min-h-10 rounded-[var(--radius-md)] bg-danger px-4 text-sm font-medium text-white" onClick={onConfirm}>{confirmLabel}</DialogPrimitive.Close></Dialog>;
+  return <Dialog trigger={trigger} title={title} description={description}><DialogPrimitive.Close className="min-h-10 rounded-[var(--radius-md)] bg-danger px-4 text-sm font-medium text-[var(--danger-contrast)]" onClick={onConfirm}>{confirmLabel}</DialogPrimitive.Close></Dialog>;
 }
 
 export function Drawer(props: Parameters<typeof Dialog>[0]) { return <Dialog {...props} side={props.side ?? "right"} />; }
