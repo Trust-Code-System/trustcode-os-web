@@ -22,8 +22,8 @@ __FONT__
 @media screen{
 body{background:var(--ui-bg);padding-bottom:calc(92px + env(safe-area-inset-bottom));-webkit-font-smoothing:antialiased;color:var(--ui-ink)}
 *{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--ui-blue) 48%,transparent) transparent}
-@supports selector(::-webkit-scrollbar){*{scrollbar-width:auto}}
-*::-webkit-scrollbar{width:4px;height:4px}*::-webkit-scrollbar-track{background:transparent}*::-webkit-scrollbar-thumb{border-radius:10px;background:color-mix(in srgb,var(--ui-blue) 48%,transparent)}*::-webkit-scrollbar-thumb:hover{background:var(--ui-blue)}
+@supports selector(::-webkit-scrollbar){*{scrollbar-width:auto;scrollbar-color:auto}}
+*::-webkit-scrollbar{width:4px;height:4px}*::-webkit-scrollbar-button{display:none;width:0;height:0}*::-webkit-scrollbar-track{background:transparent}*::-webkit-scrollbar-thumb{border-radius:10px;background:color-mix(in srgb,var(--ui-blue) 48%,transparent)}*::-webkit-scrollbar-thumb:hover{background:var(--ui-blue)}
 @media(forced-colors:active){*{scrollbar-color:auto}}
 button,a,input,textarea{touch-action:manipulation}button,a{-webkit-tap-highlight-color:transparent}
 button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var(--ui-blue);outline-offset:4px}

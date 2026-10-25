@@ -21,6 +21,8 @@ test("every workspace destination and detail tab uses the shared interaction lay
     expect(await page.locator("#main-content").evaluate((node) => node.scrollWidth - node.clientWidth), route).toBeLessThanOrEqual(1);
     const scrollbar = await page.locator("#main-content").evaluate((node) => getComputedStyle(node, "::-webkit-scrollbar").width);
     expect(scrollbar).toBe("4px");
+    await expect(page.locator("#main-content")).toHaveCSS("scrollbar-color", "auto");
+    expect([0, 4]).toContain(await page.locator("#main-content").evaluate((node) => node.offsetWidth - node.clientWidth));
   }
   for (const route of ["/clients/northstar-logistics", "/projects/northstar-logistics-project"]) {
     await page.goto(route);
