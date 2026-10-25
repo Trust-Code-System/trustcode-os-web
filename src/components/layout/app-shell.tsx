@@ -136,7 +136,7 @@ export function AppShell({
               className="inline-flex shrink-0 items-center gap-1.5 lg:hidden"
             >
               <BrandMark className="lg:hidden" />
-              <BrandWordmark className="h-8 w-auto sm:h-9" />
+              <BrandWordmark className="hidden h-8 w-auto min-[400px]:block sm:h-9" />
             </Link>
             <button
               type="button"

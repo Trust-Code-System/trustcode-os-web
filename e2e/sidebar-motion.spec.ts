@@ -68,6 +68,8 @@ test("workspace remains usable on phones, tablets and desktop", async ({ page },
     await page.setViewportSize({ width, height: 900 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), `${width}px document`).toBe(0);
     expect(await page.locator("#main-content").evaluate((node) => node.scrollWidth - node.clientWidth), `${width}px workspace`).toBe(0);
+    const account = (await page.getByRole("button", { name: "User menu", exact: true }).boundingBox())!;
+    expect(account.x + account.width, `${width}px toolbar controls`).toBeLessThanOrEqual(width);
     if (width === 375) await page.screenshot({ path: testInfo.outputPath("dashboard-phone.png") });
   }
   await page.setViewportSize({ width: 375, height: 812 });
