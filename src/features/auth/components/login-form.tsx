@@ -109,7 +109,7 @@ export function LoginForm() {
       <div className="flex justify-end">
         <Link
           href="/forgot-password"
-          className="text-sm font-medium text-white/80 hover:text-white"
+          className="text-xs font-medium text-brand underline-offset-4 hover:underline"
         >
           Forgot password?
         </Link>
@@ -117,13 +117,13 @@ export function LoginForm() {
       <Button
         type="submit"
         loading={login.isPending}
-        className="w-full bg-white text-brand shadow-none hover:bg-white/90 hover:text-brand"
+        className="min-h-12 w-full"
       >
         Sign in
       </Button>
       {useMocks ? (
-        <div className="rounded-[var(--radius-md)] bg-white/10 p-3 text-xs text-white/80">
-          <p className="font-medium text-white">Mock-mode accounts</p>
+        <div className="rounded-[var(--radius-md)] border bg-surface-hover p-3 text-xs text-text-secondary">
+          <p className="font-medium text-text-primary">Mock-mode accounts</p>
           <p className="mt-1">Admin: admin@trustcode.test</p>
           <p>Member: member@trustcode.test</p>
           <p>Password: TrustCode123!</p>

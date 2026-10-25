@@ -21,7 +21,7 @@ export function SquishThumb({ checked }: { checked: boolean }) {
     const animation = animate(x, checked ? 20 : 0, { type: "spring", stiffness: 170, damping: 21.5, mass: 0.9 });
     return () => animation.stop();
   }, [checked, reduce, x]);
-  return <motion.span aria-hidden className="block size-4 rounded-full bg-white shadow" style={{ x, scaleX, scaleY }} />;
+  return <motion.span aria-hidden className="block size-4 rounded-full bg-[var(--switch-thumb)] shadow" style={{ x, scaleX, scaleY }} />;
 }
 
 /** Ring/check vocabulary bound to actual pending and result states. */

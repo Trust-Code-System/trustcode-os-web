@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
+import { PageEntrance } from "@/components/layout/soft-navigation";
 
 export default function WorkspaceTemplate({ children }: { children: ReactNode }) {
-  return <div className="route-enter min-w-0">{children}</div>;
+  return <PageEntrance>{children}</PageEntrance>;
 }

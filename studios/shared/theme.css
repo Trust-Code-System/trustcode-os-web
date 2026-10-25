@@ -1,0 +1,24 @@
+@media screen {
+  html[data-theme="dark"][data-studio="invoice"] {
+    color-scheme: dark;
+    --ui-bg:#0a101c;--ui-surface:#111a2b;--ui-soft:#1a263c;--ui-line:#28364c;
+    --ui-ink:#edf2fc;--ui-muted:#afbed5;--ui-blue:#a5bbff;--ui-blue-hover:#c1cfff;
+    --ui-scroll:#718cce;--ui-green:#77d9b0;
+    --ui-blue-soft:#1c2c4b;--ui-error:#f294a3;--ui-error-bg:#321b29;
+    --ui-control-border:#50617c;--ui-border-hover:#8ea3c8;--ui-backdrop:#02060ec2;
+    --ui-menu-shadow:0 18px 48px #0006;--ui-actions-shadow:0 -8px 24px #0003;
+  }
+  html[data-theme="dark"][data-studio="contract"] {
+    color-scheme:dark;--bg:#0a101c;--surface:#111a2b;--soft:#1a263c;--line:#28364c;--border:#50617c;
+    --ink:#edf2fc;--muted:#afbed5;--blue:#a5bbff;--blue-hover:#c1cfff;--blue-soft:#1c2c4b;--green:#77d9b0;
+    --micro-track:#1a263c;--micro-fuse:#a5bbff;
+    --error:#f294a3;--error-bg:#321b29;--shadow:0 8px 32px #0003;
+  }
+  html[data-theme="dark"][data-studio="contract"] .paper {
+    color-scheme:light;--surface:#fff;--ink:#101c35;--muted:#56647b;--line:#dfe5ee;--border:#bac6d8;
+    --blue:#1644b4;--blue-soft:#edf2ff;--soft:#f4f6fa;--green:#08734f;
+  }
+  html[data-theme="dark"][data-studio="invoice"] .sheet { color-scheme:light; }
+  html[data-theme="dark"][data-studio="contract"] .type-switch,
+  html[data-theme="dark"][data-studio="contract"] .view-switch { background:var(--soft); }
+}

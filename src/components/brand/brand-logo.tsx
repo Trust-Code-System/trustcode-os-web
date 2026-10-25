@@ -23,20 +23,10 @@ export function BrandWordmark({
   inverse?: boolean;
   className?: string;
 }) {
-  return (
-    <Image
-      src={
-        inverse
-          ? "/brand/trustcode-system-wordmark-dark.png"
-          : "/brand/trustcode-systems-wordmark.png"
-      }
-      alt="TrustCode System"
-      width={1170}
-      height={430}
-      priority
-      className={cn("h-9 w-auto", className)}
-    />
-  );
+  return <span className={cn("inline-flex h-9 w-auto", className)}>
+    {!inverse ? <Image src="/brand/trustcode-systems-wordmark.png" alt="TrustCode System" width={1170} height={430} priority className="brand-wordmark-light h-full w-auto" /> : null}
+    <Image src="/brand/trustcode-system-wordmark-dark.png" alt="TrustCode System" width={1170} height={430} priority className={cn("h-full w-auto", !inverse && "brand-wordmark-dark")} />
+  </span>;
 }
 
 export function BrandLogo({
