@@ -33,6 +33,9 @@ button, input, textarea, select { font: inherit; }
 a { text-decoration: none; }
 ::selection { background: var(--surface-active); }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+/* Text fields signal focus through their surface instead of a surrounding box. */
+input:not([type="checkbox"]):not([type="radio"]):focus,
+textarea:focus { outline: none; background-color: var(--surface-hover); }
 .brand-wordmark-dark, .theme-icon-dark { display: none; }
 :root[data-theme="dark"] .brand-wordmark-light, :root[data-theme="dark"] .theme-icon-light { display: none; }
 :root[data-theme="dark"] .brand-wordmark-dark, :root[data-theme="dark"] .theme-icon-dark { display: block; }
@@ -48,6 +51,7 @@ a { text-decoration: none; }
   width: 4px;
   height: 4px;
 }
+*::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
 *::-webkit-scrollbar-track {
   background: transparent;
   border-radius: var(--radius-full);
@@ -66,7 +70,7 @@ a { text-decoration: none; }
 *::-webkit-scrollbar-corner {
   background: transparent;
 }
-@supports selector(::-webkit-scrollbar) { * { scrollbar-width: auto; } }
+@supports selector(::-webkit-scrollbar) { * { scrollbar-width: auto; scrollbar-color: auto; } }
 .skip-link { position: fixed; z-index: 100; left: var(--space-4); top: var(--space-4); transform: translateY(-200%); border-radius: var(--radius-md); background: var(--surface); padding: var(--space-3) var(--space-4); box-shadow: var(--shadow-2); }
 .skip-link:focus { transform: translateY(0); }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; } }
@@ -258,6 +262,9 @@ html[data-transition-kind="theme"]::view-transition-old(root) { z-index: 1; }
 }
 @media (forced-colors: active) {
   * { scrollbar-color: auto; }
+  :focus-visible,
+  input:not([type="checkbox"]):not([type="radio"]):focus,
+  textarea:focus { outline: 2px solid Highlight; outline-offset: 2px; }
   .micro-tab-thumb, .micro-option-thumb { border: 1px solid Highlight; }
   .spring-check input:checked + .spring-check-box { background: Highlight; color: HighlightText; }
   .spring-check-box svg { color: HighlightText; }

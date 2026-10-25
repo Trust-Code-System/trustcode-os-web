@@ -21,7 +21,7 @@
   --danger-contrast: #ffffff;
   --switch-thumb: #ffffff;
   --information: #0e7490;
-  --focus: #1b3fae;
+  --focus: #566174;
   --overlay: oklch(0.12 0.01 250 / 0.52);
   --shadow-1: 0 2px 4px rgb(25 39 67 / 0.015), 0 10px 28px rgb(25 39 67 / 0.025);
   --shadow-2: 0 18px 48px rgb(25 39 67 / 0.14);
@@ -76,7 +76,7 @@
   --danger-contrast: #320c16;
   --switch-thumb: #101e42;
   --information: #8ad5ec;
-  --focus: #aec2ff;
+  --focus: #b4c0d6;
   --overlay: rgb(2 6 14 / .76);
   --shadow-1: 0 4px 20px rgb(0 0 0 / .13);
   --shadow-2: 0 20px 60px rgb(0 0 0 / .45);
