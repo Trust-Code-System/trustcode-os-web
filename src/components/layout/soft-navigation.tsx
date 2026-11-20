@@ -23,7 +23,7 @@ export function SoftNavigation({ children }: { children: ReactNode }) {
       const link = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>("a[href]") : null;
       if (!link || link.hasAttribute("download") || (link.target && link.target !== "_self") || link.dataset.softNavigation === "off") return;
       const destination = new URL(link.href, location.href);
-      if (destination.origin !== location.origin || destination.pathname === pathname || destination.hash || /^\/(api|documents\/(invoices|contracts))(\/|$)/.test(destination.pathname)) return;
+      if (destination.origin !== location.origin || destination.pathname === pathname || destination.hash || /^\/api(\/|$)/.test(destination.pathname)) return;
       event.preventDefault();
       pending.current?.finish();
       transitionView("navigation", () => new Promise<void>((resolve) => {

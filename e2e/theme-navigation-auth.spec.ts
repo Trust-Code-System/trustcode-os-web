@@ -7,7 +7,7 @@ async function signIn(page: Page) {
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 30_000 });
   await expect(page.getByText("Preparing development data…", { exact: true })).toHaveCount(0, { timeout: 30_000 });
   await expect(page.getByRole("heading", { name: "Dashboard", exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Delivery snapshot", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Projects by status", exact: true })).toBeVisible();
 }
 async function theme(page: Page, name: string) {
   await page.getByRole("button", { name: "Color theme", exact: true }).click();
@@ -62,7 +62,7 @@ test("theme reveals as a curtain, persists and follows the device setting", asyn
   await expect(page.getByRole("button", { name: "Color theme", exact: true })).toBeFocused();
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  await expect(page.getByRole("heading", { name: "Delivery snapshot", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Projects by status", exact: true })).toBeVisible();
   await contentSettled(page);
   await page.screenshot({ path: testInfo.outputPath("dashboard-dark.png") });
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();

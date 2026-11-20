@@ -1,4 +1,7 @@
 @media screen {
+  :focus-visible, input:focus, textarea:focus { outline: none !important; outline-offset: 0; box-shadow: none; }
+  button:focus-visible, a:focus-visible, summary:focus-visible, [role="option"]:focus-visible { background-color: var(--blue-soft, var(--ui-blue-soft)); color: var(--blue, var(--ui-blue)); }
+  input:focus, textarea:focus { background-color: var(--soft, var(--ui-soft)); }
   html[data-theme="dark"][data-studio="invoice"] {
     color-scheme: dark;
     --ui-bg:#0a101c;--ui-surface:#111a2b;--ui-soft:#1a263c;--ui-line:#28364c;
@@ -21,4 +24,7 @@
   html[data-theme="dark"][data-studio="invoice"] .sheet { color-scheme:light; }
   html[data-theme="dark"][data-studio="contract"] .type-switch,
   html[data-theme="dark"][data-studio="contract"] .view-switch { background:var(--soft); }
+}
+@media screen and (forced-colors: active) {
+  :focus-visible, input:focus, textarea:focus { outline: 2px solid Highlight !important; outline-offset: 2px; }
 }

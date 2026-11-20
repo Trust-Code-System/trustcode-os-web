@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Archive, ArrowUpRight, BriefcaseBusiness, CalendarDays, Check, CheckCircle2, ExternalLink, FileSignature, FolderKanban, Plus, ReceiptText, RotateCw, Trash2, UsersRound } from "lucide-react";
+import { Archive, Check, ExternalLink, Plus, RotateCw, Trash2, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -12,8 +12,7 @@ import { FormField, Input, Select, Textarea } from "@/components/ui/form-control
 import { PageHeader, Pagination, SectionHeader } from "@/components/ui/navigation";
 import { Tabs } from "@/components/ui/overlays";
 import { toAppError } from "@/lib/errors/app-error";
-import { DashboardGreeting } from "./dashboard-greeting";
-import { studioCatalog } from "@/features/studios/catalog";
+import { DashboardOverview } from "./dashboard-overview";
 import { refreshAppData } from "@/lib/query/cache";
 import {
   activityEntityTypes, addProjectMember, cancelMeeting, changeProjectStatus, completeMilestone,
@@ -47,59 +46,7 @@ export function DashboardScreen() {
   });
   if (query.isLoading) return <ScreenSkeleton title="Dashboard" />;
   if (query.isError || !query.data) return <ScreenError title="Dashboard" error={query.error} retry={() => query.refetch()} />;
-  const { clients, projects, meetings } = query.data;
-  const activeProjects = projects.filter((project) => project.status === "IN_PROGRESS").length;
-  const completedProjects = projects.filter((project) => project.status === "COMPLETED").length;
-  const completion = projects.length ? Math.round(completedProjects / projects.length * 100) : 0;
-  const metrics = [
-    { label: "Clients", value: clients.filter((client) => client.status === "ACTIVE").length, hint: "Active relationships", icon: BriefcaseBusiness, href: "/clients" },
-    { label: "Projects", value: projects.length, hint: `${activeProjects} in progress`, icon: FolderKanban, href: "/projects" },
-    { label: "Completed", value: completedProjects, hint: "Projects delivered", icon: CheckCircle2, href: "/projects" },
-    { label: "Upcoming meetings", value: meetings.length, hint: "On your schedule", icon: CalendarDays, href: "/meetings" },
-  ];
-  return <div className="dashboard-overview">
-    <PageHeader eyebrow="Workspace overview" title="Dashboard" description={<DashboardGreeting />} actions={<>
-      <Link href="/projects" className={buttonVariants({ variant: "secondary", size: "sm", className: "min-h-10" })}>View projects <ArrowUpRight aria-hidden className="size-3.5" /></Link>
-      <a href={studioCatalog.invoice.href} className={buttonVariants({ size: "sm", className: "min-h-10" })}><Plus aria-hidden className="size-3.5" />Create invoice</a>
-    </>} />
-    <div className="dashboard-metrics">
-      {metrics.map(({ label: title, value, hint, icon: Icon, href }) => <Link key={title} href={href} className="dashboard-metric surface-panel">
-        <div className="flex items-center gap-2.5"><span className="metric-icon"><Icon aria-hidden className="size-4" /></span><span className="text-xs font-medium text-text-secondary">{title}</span><ArrowUpRight aria-hidden className="ml-auto size-3.5 text-text-muted" /></div>
-        <p className="metric-value">{value}</p><p className="text-[11px] text-text-muted">{hint}</p>
-      </Link>)}
-    </div>
-    <div className="dashboard-detail-grid">
-      <section className="surface-panel overflow-hidden">
-        <div className="dashboard-panel-heading"><div><h2>Recent projects</h2><p>The work moving through your team.</p></div><Link href="/projects" className="dashboard-text-link">View all <ArrowUpRight aria-hidden className="size-3.5" /></Link></div>
-        {projects.length ? <div>{projects.slice(0, 6).map((project) => <Link key={project.id} href={`/projects/${project.id}`} className="dashboard-project-row">
-          <span className="project-row-icon"><FolderKanban aria-hidden className="size-4" /></span>
-          <div className="min-w-0 flex-1"><p className="truncate text-xs font-semibold">{project.name}</p><p className="mt-1 truncate text-[11px] text-text-muted">{clientName(clients, project.clientId)}</p></div>
-          <span className="hidden text-[11px] text-text-muted sm:block">{project.dueDate ? format(new Date(project.dueDate), "d MMM yyyy") : "No due date"}</span>
-          <Badge tone={projectTone(project.status)}>{label(project.status)}</Badge><ArrowUpRight aria-hidden className="size-3.5 shrink-0 text-text-muted" />
-        </Link>)}</div> : <div className="p-6"><CompactEmpty title="No projects yet" /></div>}
-      </section>
-      <section className="surface-panel p-5 md:p-6">
-        <div className="dashboard-panel-heading !p-0"><div><h2>Delivery snapshot</h2><p>Current project status.</p></div></div>
-        <div className="delivery-progress">
-          <svg viewBox="0 0 120 120" role="img" aria-label={`${completedProjects} of ${projects.length} projects completed`} className="size-32 shrink-0">
-            <circle cx="60" cy="60" r="48" fill="none" stroke="var(--surface-hover)" strokeWidth="9" />
-            <circle cx="60" cy="60" r="48" fill="none" stroke="var(--brand)" strokeWidth="9" pathLength="100" strokeDasharray={`${completion} 100`} strokeLinecap={completion ? "round" : "butt"} transform="rotate(-90 60 60)" />
-            <text x="60" y="58" textAnchor="middle" fill="var(--text-primary)" fontSize="26" fontWeight="700">{completion}%</text><text x="60" y="75" textAnchor="middle" fill="var(--text-muted)" fontSize="9">completed</text>
-          </svg>
-          <div className="min-w-0"><p className="text-sm font-semibold">{completedProjects} of {projects.length}</p><p className="mt-1 text-xs leading-5 text-text-muted">projects have reached completion.</p></div>
-        </div>
-        <ul className="grid gap-3">{projectStatuses.map((status) => <li key={status} className="flex items-center justify-between gap-3 text-[11px]"><span className="flex items-center gap-2 text-text-secondary"><span className={`status-dot status-${status.toLowerCase()}`} />{label(status)}</span><span className="font-semibold tabular-nums">{projects.filter((project) => project.status === status).length}</span></li>)}</ul>
-      </section>
-      <section className="surface-panel overflow-hidden">
-        <div className="dashboard-panel-heading"><div><h2>Upcoming meetings</h2><p>Make room for the next conversation.</p></div><Link href="/meetings" className="dashboard-text-link">View calendar <ArrowUpRight aria-hidden className="size-3.5" /></Link></div>
-        {meetings.length ? meetings.slice(0, 4).map((meeting) => <Link key={meeting.id} href="/meetings" className="dashboard-project-row"><span className="meeting-date"><b>{format(new Date(meeting.startsAt), "dd")}</b><span>{format(new Date(meeting.startsAt), "MMM")}</span></span><div className="min-w-0 flex-1"><p className="truncate text-xs font-semibold">{meeting.title}</p><p className="mt-1 text-[11px] text-text-muted">{format(new Date(meeting.startsAt), "EEEE, HH:mm")}</p></div><ArrowUpRight aria-hidden className="size-3.5 text-text-muted" /></Link>) : <div className="dashboard-schedule-empty"><span className="metric-icon"><CalendarDays aria-hidden className="size-5" /></span><div><h3 className="text-sm font-semibold">No upcoming meetings</h3><p className="mt-1 text-xs leading-5 text-text-muted">Your next scheduled meeting will appear here.</p></div></div>}
-      </section>
-      <section className="surface-panel p-5 md:p-6"><div className="dashboard-panel-heading !p-0"><div><h2>Client documents</h2><p>From a clear scope to a confident handover.</p></div></div>
-        <a href={studioCatalog.invoice.href} className="document-shortcut"><ReceiptText aria-hidden className="size-5 text-brand" /><span><strong>Invoice studio</strong><small>Services, pricing and payment terms</small></span><ArrowUpRight aria-hidden className="ml-auto size-4 text-text-muted" /></a>
-        <a href={studioCatalog.contract.href} className="document-shortcut"><FileSignature aria-hidden className="size-5 text-brand" /><span><strong>Contract studio</strong><small>Service agreements and NDAs</small></span><ArrowUpRight aria-hidden className="ml-auto size-4 text-text-muted" /></a>
-      </section>
-    </div>
-  </div>;
+  return <DashboardOverview {...query.data} />;
 }
 
 export function ProjectsScreen() {
@@ -171,14 +118,14 @@ export function MeetingsScreen() {
   return <><PageHeader title="Meetings" description="Scheduled, past, and cancelled meetings from the live API." actions={<Button size="sm" onClick={() => setAdding((value) => !value)}><Plus aria-hidden className="size-4" />Schedule meeting</Button>} />{adding ? <MeetingCreateForm clients={query.data?.clients ?? []} projects={query.data?.projects ?? []} mutation={create} /> : null}<div className="mb-3 max-w-48"><Select aria-label="Meeting view" value={view} onValueChange={(value) => setView(value as MeetingView)}>{["all", "upcoming", "past", "cancelled"].map((value) => <option key={value} value={value}>{label(value)}</option>)}</Select></div>{query.isLoading ? <Skeleton className="h-72" /> : query.isError || !query.data ? <ScreenError title="Meetings could not be loaded" error={query.error} retry={() => query.refetch()} compact /> : query.data.meetings.length ? <Panel title=""><MeetingRows meetings={query.data.meetings} clients={query.data.clients} cancel={(id) => cancel.mutate(id)} reschedule={(id, startsAt) => reschedule.mutate({ id, startsAt })} {...(cancel.variables ? { cancellingId: cancel.variables } : {})} /></Panel> : <CompactEmpty title={`No ${view} meetings`} />}{cancel.error || reschedule.error ? <Alert variant="danger" title="Meeting could not be updated">{toAppError(cancel.error ?? reschedule.error).message}</Alert> : null}</>;
 }
 
-export function TeamScreen() {
+export function TeamScreen({ embedded = false }: { embedded?: boolean } = {}) {
   const queryClient = useQueryClient();
   const [inviting, setInviting] = useState(false);
   const query = useQuery({ queryKey: workspaceKeys.users(), queryFn: ({ signal }) => listUsers(1, 100, signal) });
   const invite = useMutation({ mutationFn: inviteUser, onSuccess: async () => { setInviting(false); await refreshAppData(queryClient); }, meta: { successMessage: "Invitation sent" } });
   const active = useMutation({ mutationFn: ({ id, value }: { id: string; value: boolean }) => setUserActive(id, value), onSuccess: () => refreshAppData(queryClient), meta: { successMessage: "Team member access updated" } });
   const roleUpdate = useMutation({ mutationFn: ({ id, role }: { id: string; role: "ADMIN" | "MEMBER" }) => updateUser(id, { role }), onSuccess: () => refreshAppData(queryClient), meta: { successMessage: "Team member role updated" } });
-  return <><PageHeader title="Team" description="Manage organization members, pending invitations, and access roles." actions={<Button size="sm" onClick={() => setInviting((value) => !value)}><Plus aria-hidden className="size-4" />Invite member</Button>} />{inviting ? <InviteForm mutation={invite} /> : null}{query.isLoading ? <Skeleton className="h-72" /> : query.isError || !query.data ? <ScreenError title="Team could not be loaded" error={query.error} retry={() => query.refetch()} compact /> : query.data.data.length ? <Panel title=""><Table><TableHead><tr><TableHeader>Member</TableHeader><TableHeader>Role</TableHeader><TableHeader>Last login</TableHeader><TableHeader>Status</TableHeader><TableHeader>Action</TableHeader></tr></TableHead><TableBody>{query.data.data.map((user) => <TableRow key={user.id}><TableCell><p className="font-medium">{user.name}</p><p className="text-xs text-text-muted">{user.email}</p></TableCell><TableCell><Select aria-label={`Role for ${user.name}`} value={user.role} disabled={roleUpdate.isPending} onValueChange={(role) => roleUpdate.mutate({ id: user.id, role: role as "ADMIN" | "MEMBER" })}><option value="MEMBER">Member</option><option value="ADMIN">Admin</option></Select></TableCell><TableCell>{user.lastLoginAt ? format(new Date(user.lastLoginAt), "d MMM yyyy, HH:mm") : "Never"}</TableCell><TableCell><div className="flex flex-wrap gap-1"><Badge tone={user.isActive ? "success" : "warning"}>{user.isActive ? "Active" : "Inactive"}</Badge>{user.emailVerifiedAt ? null : <Badge tone="warning">Unverified</Badge>}</div></TableCell><TableCell><Button size="sm" variant="secondary" loading={active.isPending && active.variables?.id === user.id} onClick={() => active.mutate({ id: user.id, value: !user.isActive })}>{user.isActive ? "Deactivate" : "Activate"}</Button></TableCell></TableRow>)}</TableBody></Table></Panel> : <CompactEmpty title="No team members" />}{active.error || roleUpdate.error ? <Alert variant="danger" title="Team member could not be updated">{toAppError(active.error ?? roleUpdate.error).message}</Alert> : null}<InvitationsPanel /></>;
+  return <>{embedded ? <div className="settings-members-heading"><div><h2>Members</h2><p>People who can sign in to the TrustCode workspace.</p></div><Button size="sm" onClick={() => setInviting((value) => !value)}><Plus aria-hidden className="size-4" />Invite member</Button></div> : <PageHeader title="Team" description="Manage organization members, pending invitations, and access roles." actions={<Button size="sm" onClick={() => setInviting((value) => !value)}><Plus aria-hidden className="size-4" />Invite member</Button>} />}{inviting ? <InviteForm mutation={invite} /> : null}{query.isLoading ? <Skeleton className="h-72" /> : query.isError || !query.data ? <ScreenError title="Team could not be loaded" error={query.error} retry={() => query.refetch()} compact /> : query.data.data.length ? <Panel title=""><Table><TableHead><tr><TableHeader>Member</TableHeader><TableHeader>Role</TableHeader><TableHeader>Last login</TableHeader><TableHeader>Status</TableHeader><TableHeader>Action</TableHeader></tr></TableHead><TableBody>{query.data.data.map((user) => <TableRow key={user.id}><TableCell><p className="font-medium">{user.name}</p><p className="text-xs text-text-muted">{user.email}</p></TableCell><TableCell><Select aria-label={`Role for ${user.name}`} value={user.role} disabled={roleUpdate.isPending} onValueChange={(role) => roleUpdate.mutate({ id: user.id, role: role as "ADMIN" | "MEMBER" })}><option value="MEMBER">Member</option><option value="ADMIN">Admin</option></Select></TableCell><TableCell>{user.lastLoginAt ? format(new Date(user.lastLoginAt), "d MMM yyyy, HH:mm") : "Never"}</TableCell><TableCell><div className="flex flex-wrap gap-1"><Badge tone={user.isActive ? "success" : "warning"}>{user.isActive ? "Active" : "Inactive"}</Badge>{user.emailVerifiedAt ? null : <Badge tone="warning">Unverified</Badge>}</div></TableCell><TableCell><Button size="sm" variant="secondary" loading={active.isPending && active.variables?.id === user.id} onClick={() => active.mutate({ id: user.id, value: !user.isActive })}>{user.isActive ? "Deactivate" : "Activate"}</Button></TableCell></TableRow>)}</TableBody></Table></Panel> : <CompactEmpty title="No team members" />}{active.error || roleUpdate.error ? <Alert variant="danger" title="Team member could not be updated">{toAppError(active.error ?? roleUpdate.error).message}</Alert> : null}<InvitationsPanel /></>;
 }
 
 // Invitations are admin-only upstream; a 403 here just means the signed-in user is a member.

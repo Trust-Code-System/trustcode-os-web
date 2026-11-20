@@ -1,78 +1,29 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-
-import { Button } from "@/components/ui/button";
+import { ShieldCheck } from "lucide-react";
+import type { ReactNode } from "react";
 import { Input } from "@/components/ui/form-controls";
-import { SectionHeader } from "@/components/ui/navigation";
-import type { SessionUser } from "@/features/auth/types/auth";
 import { ProfilePhotoManager } from "@/features/settings/components/profile-photo-manager";
+import { WorkspaceUrl } from "@/features/settings/components/workspace-url";
 import { readSessionUser } from "@/lib/auth/session";
 
 export const metadata: Metadata = { title: "Settings" };
 
-const unavailable =
-  "This action will be enabled when its backend contract is implemented.";
-
 export default async function SettingsProfilePage() {
   const user = await readSessionUser();
   if (!user) redirect("/login");
-  return <ProfileSettingsPanel user={user} />;
+  return <section className="settings-general-panel">
+    <header className="settings-panel-header"><div><h2>General</h2><p>Your workspace identity and personal account details.</p></div><span><ShieldCheck size={13} aria-hidden />Secure workspace</span></header>
+    <SettingsRow title="Workspace name" description="The team workspace for clients, projects, and delivery."><div className="settings-name-field"><span className="settings-workspace-avatar">T</span><Input aria-label="Workspace name" value="TrustCode System Limited" readOnly /></div></SettingsRow>
+    <SettingsRow title="Workspace URL" description="Where your team signs in. Keep this link close."><WorkspaceUrl /></SettingsRow>
+    <SettingsRow title="Brand colour" description="The TrustCode blue used for buttons, links, and selected states."><div className="settings-brand-row"><span className="settings-color-token"><i />#1B3FAE</span><span className="settings-brand-preview">TrustCode blue</span></div></SettingsRow>
+    <SettingsRow title="Profile information" description="Your name and email identify you throughout the workspace."><div className="settings-profile-fields"><label><span>Full name</span><Input aria-label="Full name" value={user.name ?? ""} readOnly /></label><label><span>Email address</span><Input aria-label="Email address" type="email" value={user.email} readOnly /></label></div></SettingsRow>
+    <SettingsRow title="Account access" description="Your role determines the workspace areas you can manage."><div className="settings-access-row"><span className="settings-role-badge">{user.role === "ADMIN" ? "Administrator" : "Team member"}</span><p>Contact an administrator to change account details.</p></div></SettingsRow>
+    {process.env.NEXT_PUBLIC_USE_MOCKS === "true" ? <div className="settings-photo-row"><ProfilePhotoManager user={user} /></div> : null}
+    <footer className="settings-panel-footer"><span>TrustCode System Limited</span><span>Account details are managed by your administrator.</span></footer>
+  </section>;
 }
 
-function ProfileSettingsPanel({ user }: { user: SessionUser }) {
-  const [firstName = "Admin", lastName = "User"] = (
-    user.name ?? "Admin User"
-  ).split(" ");
-
-  return (
-    <div className="grid gap-4">
-      <section className="surface-panel p-3.5">
-        <SectionHeader title="Profile information" />
-        <p className="mb-5 text-sm text-text-secondary">
-          Update your account profile information and email address.
-        </p>
-        {process.env.NEXT_PUBLIC_USE_MOCKS === "true" ? (
-          <ProfilePhotoManager user={user} />
-        ) : (
-          <section className="mb-5 border-b pb-5" aria-labelledby="profile-photo-heading">
-            <h3 id="profile-photo-heading" className="text-sm font-semibold">Profile photo</h3>
-            <p className="mt-1 text-xs text-text-secondary">Profile-photo upload is unavailable because the current backend does not expose a profile avatar endpoint.</p>
-          </section>
-        )}
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="First name" value={firstName} />
-          <Field label="Last name" value={lastName} />
-          <div className="sm:col-span-2">
-            <Field label="Email address" value={user.email} />
-          </div>
-          <div className="sm:col-span-2">
-            <Field
-              label="Role / title"
-              value={
-                user.role === "ADMIN"
-                  ? "System administrator"
-                  : "Team member"
-              }
-            />
-          </div>
-        </div>
-        <Button
-          className="mt-5 sm:ml-auto sm:flex"
-          disabled
-          title={unavailable}
-        >
-          Save changes
-        </Button>
-      </section>
-    </div>
-  );
-}
-
-function Field({ label, value }: { label: string; value: string }) {
-  return (
-    <label className="grid gap-1.5 text-xs font-medium text-text-secondary">
-      {label}
-      <Input value={value} readOnly />
-    </label>
-  );
+function SettingsRow({ title, description, children }: { title: string; description: string; children: ReactNode }) {
+  return <div className="settings-form-row"><div><h3>{title}</h3><p>{description}</p></div><div>{children}</div></div>;
 }

@@ -4,6 +4,8 @@ import type { ReactNode } from "react";
 
 import { Providers } from "./providers";
 import "./globals.css";
+import "../styles/dashboard.css";
+import "../styles/reference-ui.css";
 import { themeBootstrap } from "@/lib/ui/theme-bootstrap";
 
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope" });

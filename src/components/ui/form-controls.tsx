@@ -11,6 +11,7 @@ import {
   forwardRef,
   isValidElement,
   useId,
+  useRef,
   useState,
   type InputHTMLAttributes,
   type ReactNode,
@@ -55,8 +56,16 @@ function decodeValue(value: string) {
 export const Input = forwardRef<
   HTMLInputElement,
   InputHTMLAttributes<HTMLInputElement>
->(function Input({ className, ...props }, ref) {
-  return <input ref={ref} className={cn(fieldClass, className)} {...props} />;
+>(function Input({ className, onInput, ...props }, ref) {
+  const reduced = useMotionPreference();
+  const typingAnimation = useRef<Animation | null>(null);
+  return <input ref={ref} className={cn(fieldClass, "micro-input", className)} {...props} onInput={(event) => {
+    if (!reduced && typeof event.currentTarget.animate === "function") {
+      typingAnimation.current?.cancel();
+      typingAnimation.current = event.currentTarget.animate([{ boxShadow: "0 0 0 0px var(--surface-active)" }, { boxShadow: "0 0 0 3px var(--surface-active)" }, { boxShadow: "0 0 0 0px var(--surface-active)" }], { duration: 260, easing: "cubic-bezier(.22,1,.36,1)" });
+    }
+    onInput?.(event);
+  }} />;
 });
 
 export const Textarea = forwardRef<

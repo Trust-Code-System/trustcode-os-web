@@ -122,12 +122,12 @@ export function LoginForm() {
         Sign in
       </Button>
       {useMocks ? (
-        <div className="rounded-[var(--radius-md)] border bg-surface-hover p-3 text-xs text-text-secondary">
-          <p className="font-medium text-text-primary">Mock-mode accounts</p>
+        <details className="rounded-[var(--radius-md)] border bg-surface-hover p-3 text-xs text-text-secondary">
+          <summary className="cursor-pointer font-medium text-text-primary">Development accounts</summary>
           <p className="mt-1">Admin: admin@trustcode.test</p>
           <p>Member: member@trustcode.test</p>
           <p>Password: TrustCode123!</p>
-        </div>
+        </details>
       ) : null}
     </form>
   );

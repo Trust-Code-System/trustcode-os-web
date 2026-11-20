@@ -7,10 +7,11 @@ test("document studios keep quiet field focus and slim document scrollbars", asy
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 30_000 });
   for (const route of ["/documents/invoices", "/documents/contracts"]) {
     await page.goto(route);
-    const field = page.locator("input:visible:not([type=checkbox]):not([type=radio])").first();
+    const frame = page.frameLocator(".studio-workspace-frame");
+    const field = frame.locator("input:visible:not([type=checkbox]):not([type=radio])").first();
     await field.focus();
     await expect(field).toHaveCSS("outline-style", "none");
-    await expect(page.locator("html")).toHaveCSS("scrollbar-color", "auto");
+    await expect(frame.locator("html")).toHaveCSS("scrollbar-color", "auto");
     expect(await page.evaluate(() => window.innerWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(4);
     await page.emulateMedia({ forcedColors: "active" });
     await expect(field).toHaveCSS("outline-style", "solid");
