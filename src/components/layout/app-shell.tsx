@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronRight, CircleHelp, Menu, PanelLeft, Search } from "lucide-react";
+import { ChevronDown, ChevronRight, CircleHelp, FileSignature, Menu, PanelLeft, ReceiptText, Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
@@ -79,19 +79,20 @@ export function AppShell({
             <div className="fold-sidebar-contents">
               <Link href="/dashboard" aria-label="TrustCode OS dashboard" className="sidebar-brand">
                 <BrandMark className="size-10" />
-                <span><BrandWordmark className="h-7 w-auto" /><span className="sidebar-brand-caption">TEAM WORKSPACE</span></span>
+                <span><BrandWordmark className="h-7 w-auto" /><span className="sidebar-brand-caption">Agency workspace</span></span><ChevronDown aria-hidden className="ml-auto size-3 text-text-muted" />
               </Link>
-              <button type="button" className="sidebar-search" onClick={() => setCommandOpen(true)} aria-label="Search workspace">
-                <Search aria-hidden className="size-4" /><span>Find a page...</span><kbd>⌘K</kbd>
-              </button>
               <nav aria-label="Primary navigation" className="sidebar-navigation">
-                <p className="sidebar-group-label">Workspace</p>
+                <p className="sidebar-group-label">Main menu</p>
                 <RailNavigation items={primaryNavigation} pathname={pathname} role={user.role} />
-                <p className="sidebar-group-label mt-7">Manage</p>
-                <RailNavigation items={secondaryNavigation} pathname={pathname} role={user.role} />
+                <p className="sidebar-group-label sidebar-group-divider">Document studios</p>
+                <RailNavigation items={[{ label: "Invoice studio", href: "/documents/invoices", icon: ReceiptText }, { label: "Contract studio", href: "/documents/contracts", icon: FileSignature }]} pathname={pathname} role={user.role} />
+                <p className="sidebar-group-label sidebar-group-divider">Management</p>
+                <RailNavigation items={secondaryNavigation.filter((item) => item.href !== "/settings")} pathname={pathname} role={user.role} />
+                <p className="sidebar-group-label sidebar-group-divider">Settings</p>
+                <RailNavigation items={secondaryNavigation.filter((item) => item.href === "/settings")} pathname={pathname} role={user.role} />
+                <a href="mailto:hello@trustcodesystem.tech" className="sidebar-link"><CircleHelp aria-hidden className="size-4" /><span>Help & support</span></a>
               </nav>
               <div className="sidebar-footer">
-                <a href="mailto:hello@trustcodesystem.tech" className="sidebar-help"><CircleHelp aria-hidden className="size-4" />Help and support<ChevronRight aria-hidden className="ml-auto size-3.5" /></a>
                 <Link href="/settings/profile" className="sidebar-profile">
                   <Avatar name={user.name ?? user.email} {...(user.avatarUrl ? { src: user.avatarUrl } : {})} size="sm" />
                   <span className="min-w-0"><strong className="block truncate text-xs font-semibold">{user.name ?? user.email}</strong><span className="mt-0.5 block text-[11px] text-text-muted">{user.role === "ADMIN" ? "Administrator" : "Team member"}</span></span>
@@ -130,7 +131,7 @@ export function AppShell({
                 <PanelLeft aria-hidden className="size-[1.1rem]" />
               </IconButton>
             </Tooltip>
-            <div className="hidden min-w-0 items-center gap-3 text-xs lg:flex"><span className="text-text-muted">Workspace</span><span aria-hidden className="text-border-strong">/</span><span className="truncate font-semibold">{currentSection}</span></div>
+            <div className="hidden min-w-0 items-center gap-2 text-xs lg:flex"><span className="text-text-muted">{pathname === "/dashboard" ? "Dashboard" : "Workspace"}</span><ChevronRight aria-hidden className="size-3 text-text-muted" /><span className="truncate font-semibold">{pathname === "/dashboard" ? "Overview" : currentSection}</span></div>
             <Link
               href="/dashboard"
               aria-label="TrustCode OS dashboard"
@@ -143,7 +144,7 @@ export function AppShell({
               type="button"
               aria-label="Search workspace"
               onClick={() => setCommandOpen(true)}
-              className="ml-auto flex min-h-9 min-w-0 items-center gap-2 rounded-full border bg-surface px-3 text-left text-xs text-text-muted shadow-[var(--shadow-inset)] hover:border-border-strong hover:bg-surface-hover sm:w-48 lg:ml-auto"
+              className="toolbar-search ml-auto flex min-h-9 min-w-0 items-center gap-2 rounded-md border bg-surface px-3 text-left text-xs text-text-muted shadow-[var(--shadow-inset)] hover:border-border-strong hover:bg-surface-hover sm:w-48 lg:ml-auto"
             >
               <Search aria-hidden className="size-4 shrink-0" />
               <span className="hidden min-w-0 flex-1 truncate sm:inline">
@@ -217,7 +218,7 @@ function RailNavigation({
   return (
     <ul className="grid gap-1">
       {items.filter((item) => !item.roles || item.roles.includes(role)).map((item) => {
-        const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+        const active = pathname === item.href || (item.href !== "/documents" && pathname.startsWith(`${item.href}/`));
         const Icon = item.icon;
         return <li key={item.href}><Link href={item.href} aria-label={item.label} aria-current={active ? "page" : undefined} className={cn("sidebar-link", active && "is-active")}><Icon aria-hidden className="size-[1.1rem] shrink-0" /><span>{item.label}</span>{active ? <span className="sidebar-active-dot" aria-hidden /> : null}</Link></li>;
       })}

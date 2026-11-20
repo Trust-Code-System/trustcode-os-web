@@ -1,19 +1,18 @@
 import type { ReactNode } from "react";
-
-import { PageHeader } from "@/components/ui/navigation";
+import Link from "next/link";
+import { ScrollText } from "lucide-react";
 import { SettingsNav } from "@/features/settings/components/settings-nav";
+import { readSessionUser } from "@/lib/auth/session";
 
-export default function SettingsLayout({ children }: { children: ReactNode }) {
+export default async function SettingsLayout({ children }: { children: ReactNode }) {
+  const user = await readSessionUser();
   return (
-    <>
-      <PageHeader
-        title="Settings"
-        description="Manage your account preferences and security."
-      />
-      <div className="grid gap-4 lg:grid-cols-[13rem_1fr]">
-        <SettingsNav />
-        <div className="min-w-0">{children}</div>
+    <section className="settings-workspace">
+      <header className="settings-workspace-heading"><div><h1 aria-label="Settings">Workspace settings</h1><p>Manage your TrustCode profile, team, and workspace preferences.</p></div><Link href="/activity" className="settings-audit-link"><ScrollText size={14} aria-hidden />View audit log</Link></header>
+      <div className="settings-workspace-grid">
+        <SettingsNav showTeam={user?.role === "ADMIN"} />
+        <div className="settings-workspace-content">{children}</div>
       </div>
-    </>
+    </section>
   );
 }

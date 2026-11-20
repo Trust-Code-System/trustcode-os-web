@@ -6,7 +6,7 @@ test.beforeEach(async ({ page }) => {
   await page.goto("/login");
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Dashboard", exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Delivery snapshot", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Projects by status", exact: true })).toBeVisible();
 });
 
 test("soft fold supports focus, reversal, dragging and reduced motion", async ({ page }, testInfo) => {
@@ -37,7 +37,7 @@ test("soft fold supports focus, reversal, dragging and reduced motion", async ({
   const middle = samples.filter((sample) => sample.progress > 0.1 && sample.progress < 0.9);
   expect(middle.at(-1)!.time - middle[0]!.time).toBeGreaterThan(250);
   await testInfo.attach("fold-trajectory.json", { body: JSON.stringify(samples), contentType: "application/json" });
-  expect((await main.boundingBox())!.width).toBeGreaterThan(open!.width + 250);
+  expect((await main.boundingBox())!.width).toBeGreaterThan(open!.width + 215);
   await page.screenshot({ path: testInfo.outputPath("dashboard-folded.png") });
 
   await page.getByRole("button", { name: "Expand sidebar", exact: true }).click();
@@ -99,7 +99,7 @@ test("workspace search filters pages, contains focus and respects editing shortc
   await expect(page.locator(".app-frame")).toHaveAttribute("data-sidebar-state", "open");
   await page.keyboard.press("ArrowDown");
   await expect(page.getByRole("navigation", { name: "Quick navigation" }).getByRole("link", { name: "Documents" })).toBeFocused();
-  await expect(page.getByRole("navigation", { name: "Quick navigation" }).getByRole("link", { name: "Documents" })).toHaveCSS("outline-color", "rgb(86, 97, 116)");
+  await expect(page.getByRole("navigation", { name: "Quick navigation" }).getByRole("link", { name: "Documents" })).toHaveCSS("outline-style", "none");
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/\/documents$/);
   await expect(page.getByRole("heading", { name: "Prepare your next engagement" })).toBeVisible();

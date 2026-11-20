@@ -1,6 +1,6 @@
 # Document studios
 
-The Documents module contains Invoice Studio (`/documents/invoices`) and Contract Studio (`/documents/contracts`). Both use TrustCode OS sign-in and open as full-page workspaces with a brand link back to Documents. Contract Studio supports service agreements and mutual or one-way NDAs. The existing branded editors, responsive layouts, animated controls, original logo and exports are preserved. Full-page delivery avoids browser embedding issues and gives phone users the complete viewport.
+The Documents module contains Invoice Studio (`/documents/invoices`) and Contract Studio (`/documents/contracts`). Both use TrustCode OS sign-in and open inside the persistent workspace shell, with the sidebar and toolbar kept visible. The existing editors run in same-origin frames served by the protected studio API. Contract Studio supports service agreements and mutual or one-way NDAs. The existing branded editors, responsive layouts, animated controls, original logo and exports are preserved. Each editor owns its content scrolling; the surrounding navigation stays fixed. Phones retain the workspace navigation drawer.
 
 ## Access and storage
 

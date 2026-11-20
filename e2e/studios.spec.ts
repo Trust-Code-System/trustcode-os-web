@@ -25,11 +25,13 @@ test("both studio workspaces work across phone and desktop widths", async ({ pag
 
   for (const [kind, route] of [["invoice", "invoices"], ["contract", "contracts"]] as const) {
     await page.goto(`/documents/${route}`);
-    const frame = page;
+    const frame = page.frameLocator(".studio-workspace-frame");
+    await expect(page.getByRole("complementary", { name: "Workspace sidebar" })).toBeVisible();
     await expect(frame.locator(".appbar")).toBeVisible();
     if (kind === "contract") await expect(frame.locator("html")).toHaveAttribute("data-micro", "react-bits");
     for (const width of [320, 375, 768, 1440]) {
       await page.setViewportSize({ width, height: width < 600 ? 812 : 1000 });
+      if (width >= 1024) await expect(page.getByRole("complementary", { name: "Workspace sidebar" })).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), `${route} shell ${width}px`).toBe(false);
       const inner = await frame.locator("html").evaluate((element) => ({ scroll: element.scrollWidth, width: innerWidth }));
       expect(inner.scroll, `${route} editor ${width}px`).toBeLessThanOrEqual(inner.width);
