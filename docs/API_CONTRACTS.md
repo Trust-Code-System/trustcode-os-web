@@ -13,6 +13,8 @@ Audit source: `Trust-Code-System/trustcode-os-api` commit `0af492cd` (merge of `
 
 ## Connected modules
 
+- Subscriptions: authenticated same-origin `GET /api/subscriptions` returns `{ok: true, data: {version: 1, revision, subscriptions}}`; `PUT` accepts `{revision, subscriptions}`. This Vercel route verifies bearer identity against the existing company API before accessing a dedicated Postgres store. It uses the server-configured company API origin as its workspace key; callers cannot choose a different workspace. Updates use an atomic revision check (409 on conflicts). The frontend refreshes every 15 seconds and on window focus. Backups remain version 1; imports and **Share browser records** merge missing IDs and preserve existing shared records. Total shared data is capped at 4 MB, including raster logos, to fit Vercel's request limit. This is a single company installation; a future multi-company API must add tenant membership checks before sharing its API origin across companies. Server-only `SUBSCRIPTIONS_DATABASE_URL` configures storage. Apply the versioned schema with `node --env-file=.env.local scripts/migrate-subscriptions.mjs` before release. No Railway deployment is required.
+
 - Auth: login, logout, refresh, forgot/reset/change password, current user, accept invitation, verify email, resend verification.
 - Users: paginated list, role update, activate/deactivate. Team administration remains admin-only in both navigation and API authorization.
 - Team invitations: create, paginated list by status, resend, revoke. Admin-only.
