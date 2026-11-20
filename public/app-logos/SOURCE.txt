@@ -1,0 +1,8 @@
+Logos from Simple Icons (https://github.com/simple-icons/simple-icons).
+Source commit 32e030086fdc605196391aab28519b14dc4295b4.
+Distributed under CC0-1.0. See LICENSE.txt.
+Brand names and trademarks belong to their respective owners.
+
+Codex logo from Lobe Icons (https://github.com/lobehub/lobe-icons).
+Source commit 9752d967494e48d8f83f2808feb2b0207bf70997.
+Distributed under the MIT License. See LOBE-LICENSE.txt.

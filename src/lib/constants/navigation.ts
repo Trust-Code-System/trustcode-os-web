@@ -1,4 +1,4 @@
-import { Activity, BriefcaseBusiness, FileText, FolderKanban, LayoutDashboard, Settings, Users, UsersRound, Video } from "lucide-react";
+import { Activity, BriefcaseBusiness, FileText, FolderKanban, LayoutDashboard, PanelsTopLeft, Settings, Users, UsersRound, Video } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import type { Role } from "@/features/auth/types/auth";
@@ -11,6 +11,7 @@ export const primaryNavigation: NavigationItem[] = [
   { label: "Projects", href: "/projects", icon: FolderKanban },
   { label: "Meetings", href: "/meetings", icon: Video },
   { label: "Documents", href: "/documents", icon: FileText },
+  { label: "Apps & subscriptions", href: "/apps", icon: PanelsTopLeft },
   { label: "Activity", href: "/activity", icon: Activity },
 ];
 
