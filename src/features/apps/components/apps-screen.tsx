@@ -2,6 +2,9 @@
 
 import Image from "next/image";
 import { useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toAppError } from "@/lib/errors/app-error";
+import { readSharedSubscriptions, saveSharedSubscriptions, subscriptionsQueryKey } from "../shared-subscriptions";
 import { Check, Download, ExternalLink, Plus, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/data-display";
@@ -40,12 +43,26 @@ function displayDate(date: string) {
 }
 
 export function AppsScreen() {
-  const raw = useSyncExternalStore(subscribe, readStorage, () => "");
-  const file = useMemo(() => {
-    try { return parseStorage(raw); }
-    catch { return null; }
-  }, [raw]);
-  const [editing, setEditing] = useState<{ entry: Subscription | undefined; provider: Subscription["provider"] } | null>(null);
+  const legacyRaw = useSyncExternalStore(subscribe, readStorage, () => "");
+  const legacy = useMemo(() => {
+    try { return parseStorage(legacyRaw); } catch { return null; }
+  }, [legacyRaw]);
+  const queryClient = useQueryClient();
+  const shared = useQuery({
+    queryKey: subscriptionsQueryKey,
+    queryFn: ({ signal }) => readSharedSubscriptions(signal),
+    refetchInterval: 15_000,
+    refetchOnWindowFocus: "always",
+    retry: 1,
+  });
+  const mutation = useMutation({
+    mutationFn: ({ revision, subscriptions }: { revision: number; subscriptions: Subscription[] }) => saveSharedSubscriptions(revision, subscriptions),
+    onSuccess: (saved) => queryClient.setQueryData(subscriptionsQueryKey, saved),
+    onError: () => { void shared.refetch(); },
+  });
+  const file = shared.data ?? null;
+  const busy = mutation.isPending;
+  const [editing, setEditing] = useState<{ entry: Subscription | undefined; provider: Subscription["provider"]; revision: number } | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [search, setSearch] = useState("");
@@ -57,33 +74,41 @@ export function AppsScreen() {
   const entries = file?.subscriptions ?? [];
   const visible = entries.filter((entry) => (type === "ALL" || entry.type === type) && entry.name.toLowerCase().includes(search.toLowerCase()));
 
-  function persist(next: Subscription[]) {
-    const validated = subscriptionsFileSchema.parse({ version: 1, subscriptions: next });
-    localStorage.setItem(storageKey, JSON.stringify(validated));
-    window.dispatchEvent(new Event(changedEvent));
-    setError("");
-  }
-
-  function update(change: (current: Subscription[]) => Subscription[], message: string) {
+  async function update(change: (current: Subscription[]) => Subscription[], message: string, revision = file?.revision) {
+    if (!file || busy) return false;
+    if (revision !== file.revision) {
+      setError("A teammate updated subscriptions while this form was open. Reopen it to use the latest details.");
+      return false;
+    }
     try {
-      persist(change(parseStorage(readStorage()).subscriptions));
+      await queryClient.cancelQueries({ queryKey: subscriptionsQueryKey });
+      await mutation.mutateAsync({ revision: file.revision, subscriptions: change(file.subscriptions) });
+      setError("");
       setNotice(message);
       return true;
-    } catch {
-      setError("Changes could not be saved. Check browser storage access or import a valid backup.");
+    } catch (cause) {
+      setError(toAppError(cause).message);
       return false;
     }
   }
 
-  function save(entry: Subscription) {
-    const saved = update((current) => [...current.filter((item) => item.id !== entry.id), entry], `${entry.name} saved.`);
+  async function save(entry: Subscription) {
+    const saved = await update((current) => [...current.filter((item) => item.id !== entry.id), entry], `${entry.name} saved for the workspace.`, editing?.revision);
     if (saved) { setEditing(null); setView("subscriptions"); setSearch(""); setType("ALL"); }
     return saved;
   }
 
+  async function publishLegacy() {
+    if (!legacy || !window.confirm("Share these browser records with everyone in this workspace? Existing workspace records with the same ID will be kept.")) return;
+    const saved = await update((current) => [...current, ...legacy.subscriptions.filter((entry) => !current.some((item) => item.id === entry.id))], "Browser records shared with your workspace.");
+    if (saved) {
+      try { localStorage.removeItem(storageKey); window.dispatchEvent(new Event(changedEvent)); } catch { /* Shared save succeeded; retain local backup if storage is restricted. */ }
+    }
+  }
+
   function exportFile() {
     if (!file) return;
-    const url = URL.createObjectURL(new Blob([JSON.stringify(file, null, 2)], { type: "application/json" }));
+    const url = URL.createObjectURL(new Blob([JSON.stringify({ version: 1, subscriptions: file.subscriptions }, null, 2)], { type: "application/json" }));
     const link = document.createElement("a");
     link.href = url;
     link.download = `trustcode-subscriptions-${today}.json`;
@@ -95,10 +120,9 @@ export function AppsScreen() {
     try {
       if (upload.size > 10_000_000) throw new Error("File too large");
       const imported = subscriptionsFileSchema.parse(JSON.parse(await upload.text()));
-      if (!window.confirm(`Replace this browser's subscriptions with ${imported.subscriptions.length} imported entries?`)) return;
-      persist(imported.subscriptions);
-      setEditing(null);
-      setNotice("Subscriptions imported and saved in this browser.");
+      if (!window.confirm(`Share ${imported.subscriptions.length} imported entries with this workspace? Existing workspace records with the same ID will be kept.`)) return;
+      const saved = await update((current) => [...current, ...imported.subscriptions.filter((entry) => !current.some((item) => item.id === entry.id))], "Subscriptions imported and shared with your workspace.");
+      if (saved) setEditing(null);
     } catch {
       setError("Import failed. Choose a valid TrustCode subscriptions JSON backup under 10 MB.");
     }
@@ -108,9 +132,9 @@ export function AppsScreen() {
     <>
       <PageHeader title="Apps & subscriptions" description="Browse your tools, then track app plans, API costs, and renewal dates." actions={
         <>
-          <Button variant="secondary" onClick={exportFile} disabled={!file}><Download aria-hidden className="size-4" />Export</Button>
-          <Button variant="secondary" onClick={() => importInput.current?.click()}><Upload aria-hidden className="size-4" />Import</Button>
-          <Button onClick={() => { setEditing({ entry: undefined, provider: "custom" }); setNotice(""); }} disabled={!file}><Plus aria-hidden className="size-4" />Add another app</Button>
+          <Button variant="secondary" onClick={exportFile} disabled={!file || busy}><Download aria-hidden className="size-4" />Export</Button>
+          <Button variant="secondary" disabled={!file || busy} onClick={() => importInput.current?.click()}><Upload aria-hidden className="size-4" />Import</Button>
+          <Button onClick={() => { setEditing({ entry: undefined, provider: "custom", revision: file!.revision }); setNotice(""); }} disabled={!file || busy}><Plus aria-hidden className="size-4" />Add another app</Button>
         </>
       } />
       <input ref={importInput} type="file" accept="application/json,.json" aria-label="Import subscriptions backup" className="sr-only" tabIndex={-1} onChange={(event) => {
@@ -118,22 +142,24 @@ export function AppsScreen() {
         if (upload) void importFile(upload);
         event.target.value = "";
       }} />
-      <p className="mb-5 text-sm text-text-secondary">Saved in this browser. Export a backup to move these records to another device.</p>
-      {!file ? <Alert variant="danger" title="Saved subscriptions could not be read">Browser storage is unavailable or the saved data is invalid. Import a valid backup to restore your records.</Alert> : null}
+      <p className="mb-5 text-sm text-text-secondary">Shared with everyone in your company workspace. Updates refresh every 15 seconds and when you return to this window.</p>
+      {shared.isPending ? <p role="status">Loading workspace subscriptions…</p> : null}
+      {shared.isError ? <Alert variant="danger" title="Workspace subscriptions could not be loaded" action={<Button variant="secondary" onClick={() => { void shared.refetch(); }}>Retry</Button>}>{toAppError(shared.error).message}</Alert> : null}
+      {legacy?.subscriptions.length ? <div className="mb-4"><Alert title="Records saved in this browser" action={<Button disabled={!file || busy} onClick={() => { void publishLegacy(); }}>Share browser records</Button>}>Share your existing plans and paid statuses with your company workspace. Existing shared records will be kept.</Alert></div> : null}
       {error ? <div className="mb-4"><Alert variant="danger" title="Subscription could not be saved">{error}</Alert></div> : null}
       <p role="status" className="mb-4 text-sm text-text-secondary">{notice}</p>
       {editing ? <Dialog open onOpenChange={(open) => { if (!open) setEditing(null); }} title={editing.entry ? "Edit subscription" : "Track an app or API"} description="Record your plan, cost, payment status, and dates.">
-        <SubscriptionForm key={editing.entry?.id ?? editing.provider} entry={editing.entry} initialProvider={editing.provider} onSave={save} onCancel={() => setEditing(null)} />
+        <SubscriptionForm key={editing.entry?.id ?? editing.provider} entry={editing.entry} initialProvider={editing.provider} onSave={save} saving={busy} onCancel={() => setEditing(null)} />
       </Dialog> : null}
       <div className="mb-5 flex flex-wrap gap-2" role="group" aria-label="App views">
         <Button variant={view === "catalog" ? "primary" : "secondary"} aria-pressed={view === "catalog"} onClick={() => { setView("catalog"); setSearch(""); }}>App catalog ({appCatalog.length})</Button>
-        <Button variant={view === "subscriptions" ? "primary" : "secondary"} aria-pressed={view === "subscriptions"} onClick={() => { setView("subscriptions"); setSearch(""); }}>My subscriptions ({entries.length})</Button>
+        <Button variant={view === "subscriptions" ? "primary" : "secondary"} aria-pressed={view === "subscriptions"} onClick={() => { setView("subscriptions"); setSearch(""); }}>Workspace subscriptions ({entries.length})</Button>
       </div>
       <div className="surface-panel mb-5 grid gap-3 p-3 sm:grid-cols-2">
         <Input type="search" aria-label="Search subscriptions" placeholder="Search apps and tools" value={search} onChange={(event) => setSearch(event.target.value)} />
         {view === "catalog" ? <Select aria-label="Filter app category" value={category} onValueChange={setCategory}>{["All categories", ...new Set(appCatalog.map((app) => app.category))].map((value) => <option key={value} value={value}>{value}</option>)}</Select> : <Select aria-label="Filter subscription type" value={type} onValueChange={setType}><option value="ALL">Apps & APIs</option><option value="APP">App plans</option><option value="API">API access</option></Select>}
       </div>
-      {view === "catalog" ? <AppCatalog search={search} category={category} entries={entries} disabled={!file} onAdd={(provider) => setEditing({ entry: undefined, provider })} onEdit={(entry) => setEditing({ entry, provider: entry.provider })} /> : visible.length ? <ul className="grid gap-4 xl:grid-cols-2">
+      {view === "catalog" ? <AppCatalog search={search} category={category} entries={entries} disabled={!file || busy} onAdd={(provider) => setEditing({ entry: undefined, provider, revision: file!.revision })} onEdit={(entry) => setEditing({ entry, provider: entry.provider, revision: file!.revision })} /> : visible.length ? <ul className="grid gap-4 xl:grid-cols-2">
         {visible.map((entry) => {
           const provider = providers.find((item) => item.id === entry.provider)!;
           const status = subscriptionStatus(entry, today);
@@ -151,11 +177,11 @@ export function AppsScreen() {
               <div><dt className="text-text-secondary">Expires / renews</dt><dd className="mt-1">{entry.expiresOn ? displayDate(entry.expiresOn) : "No expiry set"}</dd></div>
             </dl>
             <div className="flex flex-wrap items-center gap-2 border-t pt-4">
-              <Button size="sm" variant={entry.paid ? "secondary" : "primary"} aria-pressed={entry.paid} aria-label={`${entry.paid ? "Mark unpaid" : "Mark paid"} for ${entry.name}`} onClick={() => update((current) => current.map((item) => item.id === entry.id ? { ...item, paid: !item.paid } : item), `${entry.name} payment updated.`)}>{entry.paid ? "Paid" : "Mark paid"}</Button>
-              <Button size="sm" variant="ghost" onClick={() => setEditing({ entry, provider: entry.provider })} aria-label={`Edit ${entry.name}`}>Edit</Button>
+              <Button size="sm" variant={entry.paid ? "secondary" : "primary"} aria-pressed={entry.paid} aria-label={`${entry.paid ? "Mark unpaid" : "Mark paid"} for ${entry.name}`} disabled={busy} onClick={() => void update((current) => current.map((item) => item.id === entry.id ? { ...item, paid: !item.paid } : item), `${entry.name} payment updated.`)}>{entry.paid ? "Paid" : "Mark paid"}</Button>
+              <Button size="sm" variant="ghost" onClick={() => setEditing({ entry, provider: entry.provider, revision: file!.revision })} disabled={busy} aria-label={`Edit ${entry.name}`}>Edit</Button>
               <Button size="sm" variant="ghost" onClick={() => {
                 if (window.confirm(`Remove ${entry.name} from your subscriptions?`)) update((current) => current.filter((item) => item.id !== entry.id), `${entry.name} removed.`);
-              }} aria-label={`Remove ${entry.name}`}>Remove</Button>
+              }} disabled={busy} aria-label={`Remove ${entry.name}`}>Remove</Button>
               {provider.website ? <a href={provider.website} target="_blank" rel="noopener noreferrer" className="ml-auto inline-flex items-center gap-1 text-sm font-medium text-brand underline underline-offset-4">Open<span className="sr-only"> {entry.name} (opens in a new tab)</span><ExternalLink aria-hidden className="size-3" /></a> : null}
             </div>
           </li>;
@@ -191,11 +217,13 @@ function AppCatalog({ search, category, entries, disabled, onAdd, onEdit }: {
       <h2 className="mb-3 text-sm font-semibold">{group}</h2>
       <ul className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
         {apps.filter((app) => app.category === group).map((app) => {
-          const count = entries.filter((entry) => entry.provider === app.id).length;
+          const plans = entries.filter((entry) => entry.provider === app.id);
+          const count = plans.length;
+          const paid = plans.filter((entry) => entry.paid).length;
           return <li key={app.id} className="min-w-0">
-            <button type="button" disabled={disabled} onClick={() => onAdd(app.id)} aria-label={`Track ${app.name}`} className="flex h-full w-full items-center gap-3 rounded-xl border bg-surface p-3 text-left transition-colors hover:border-brand hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-brand disabled:opacity-50">
+            <button type="button" disabled={disabled} onClick={() => plans[0] ? onEdit(plans[0]) : onAdd(app.id)} aria-label={`${count ? "View" : "Track"} ${app.name}`} className="flex h-full w-full items-center gap-3 rounded-xl border bg-surface p-3 text-left transition-colors hover:border-brand hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-brand disabled:opacity-50">
               <AppLogo name={app.name} icon={app.icon} />
-              <span className="min-w-0 flex-1"><span className="block break-words text-sm font-semibold">{app.name}</span><span className="mt-1 block text-xs text-text-secondary">{count ? `${count} ${count === 1 ? "plan" : "plans"} tracked` : "Add a plan or API"}</span></span>
+              <span className="min-w-0 flex-1"><span className="block break-words text-sm font-semibold">{app.name}</span><span className="mt-1 block text-xs text-text-secondary">{count ? `${count} ${count === 1 ? "plan" : "plans"} · ${paid} paid` : "Add a plan or API"}</span></span>
               {count ? <Check aria-hidden className="size-4 shrink-0 text-brand" /> : <Plus aria-hidden className="size-4 shrink-0 text-text-secondary" />}
             </button>
           </li>;
@@ -206,7 +234,7 @@ function AppCatalog({ search, category, entries, disabled, onAdd, onEdit }: {
   </div>;
 }
 
-function SubscriptionForm({ entry, initialProvider, onSave, onCancel }: { entry: Subscription | undefined; initialProvider: Subscription["provider"]; onSave: (entry: Subscription) => boolean; onCancel: () => void }) {
+function SubscriptionForm({ entry, initialProvider, onSave, saving, onCancel }: { entry: Subscription | undefined; initialProvider: Subscription["provider"]; onSave: (entry: Subscription) => Promise<boolean>; saving: boolean; onCancel: () => void }) {
   const [provider, setProvider] = useState<Subscription["provider"]>(entry?.provider ?? initialProvider);
   const [name, setName] = useState(entry?.name ?? (initialProvider === "custom" ? "" : providers.find((item) => item.id === initialProvider)!.name));
   const [error, setError] = useState("");
@@ -215,7 +243,7 @@ function SubscriptionForm({ entry, initialProvider, onSave, onCancel }: { entry:
   const logoRequest = useRef(0);
   const selected = providers.find((item) => item.id === provider)!;
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     const result = subscriptionSchema.safeParse({
@@ -226,10 +254,10 @@ function SubscriptionForm({ entry, initialProvider, onSave, onCancel }: { entry:
     });
     if (!result.success) { setError(result.error.issues[0]?.message ?? "Check your subscription details."); return; }
     setError("");
-    if (!onSave(result.data)) setError("This subscription could not be saved. Check browser storage access or export a backup and free some space.");
+    if (!await onSave(result.data)) setError("This subscription could not be saved. Check the message above. If a teammate changed it, cancel and reopen this form.");
   }
 
-  return <form onSubmit={submit}>
+  return <form onSubmit={(event) => { void submit(event); }}>
     <div className="mb-5 flex items-center gap-3"><AppLogo name={name || "App"} icon={selected.icon} logo={logo} /><p className="font-semibold">{name || "Your app"}</p></div>
     <div className="grid gap-4 sm:grid-cols-2">
       <label className="grid gap-2 text-sm">Tool<Select aria-label="Tool" value={provider} onValueChange={(value) => {
@@ -277,6 +305,6 @@ function SubscriptionForm({ entry, initialProvider, onSave, onCancel }: { entry:
     </div> : null}
     <label className="my-5 flex items-center gap-2 text-sm"><input name="paid" type="checkbox" defaultChecked={entry?.paid ?? false} className="size-4 accent-brand" />Paid for the current period</label>
     {error ? <p role="alert" className="mb-4 text-sm text-danger">{error}</p> : null}
-    <div className="flex flex-wrap gap-2"><Button type="submit" disabled={readingLogo}>{readingLogo ? "Reading logo…" : "Save subscription"}</Button><Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button></div>
+    <div className="flex flex-wrap gap-2"><Button type="submit" disabled={readingLogo || saving}>{saving ? "Saving…" : readingLogo ? "Reading logo…" : "Save subscription"}</Button><Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button></div>
   </form>;
 }

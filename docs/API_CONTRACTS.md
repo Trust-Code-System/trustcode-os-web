@@ -13,6 +13,8 @@ Audit source: `Trust-Code-System/trustcode-os-api` commit `0af492cd` (merge of `
 
 ## Connected modules
 
+- Subscriptions: authenticated `GET /api/subscriptions` returns `{version: 1, revision, subscriptions}`; `PUT` accepts `{revision, subscriptions}`. Records are shared by staff in this company's API/database, like clients and projects. Updates use an atomic revision check (409 on conflicts), never per-user browser storage. The frontend polls every 15 seconds and refreshes on window focus. Backups remain version 1; imports and the explicit **Share browser records** migration merge missing IDs and preserve existing shared records. Total shared data is capped at 4 MB, including raster logos, to fit the production proxy's request limit. This API is a single company installation; a future multi-company service must add tenant membership and tenant keys before serving other companies.
+
 - Auth: login, logout, refresh, forgot/reset/change password, current user, accept invitation, verify email, resend verification.
 - Users: paginated list, role update, activate/deactivate. Team administration remains admin-only in both navigation and API authorization.
 - Team invitations: create, paginated list by status, resend, revoke. Admin-only.
