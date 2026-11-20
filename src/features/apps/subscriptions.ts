@@ -1,4 +1,7 @@
 import { z } from "zod";
+import { appCatalog } from "./catalog";
+
+export const providers = [...appCatalog, { id: "custom", name: "Other app", icon: "", website: "", category: "Other" }] as const;
 
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
   const parsed = new Date(`${value}T00:00:00Z`);
@@ -8,7 +11,8 @@ const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
 export const subscriptionSchema = z.object({
   id: z.string().min(1).max(100),
   name: z.string().trim().min(1).max(100),
-  provider: z.enum(["custom", "codex", "claude", "anthropic", "github", "vercel", "figma", "notion", "slack", "supabase"]),
+  provider: z.enum(providers.map((provider) => provider.id)),
+  logo: z.string().max(400_000).regex(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/).optional(),
   type: z.enum(["APP", "API"]),
   amount: z.number().finite().min(0).max(1_000_000_000),
   currency: z.enum(["USD", "NGN", "GBP", "EUR"]),
@@ -29,19 +33,6 @@ export const subscriptionsFileSchema = z.object({
 });
 
 export type Subscription = z.infer<typeof subscriptionSchema>;
-
-export const providers = [
-  { id: "codex", name: "Codex", icon: "codex", website: "https://chatgpt.com/codex" },
-  { id: "claude", name: "Claude", icon: "claude", website: "https://claude.ai" },
-  { id: "anthropic", name: "Anthropic", icon: "anthropic", website: "https://console.anthropic.com" },
-  { id: "github", name: "GitHub", icon: "github", website: "https://github.com" },
-  { id: "vercel", name: "Vercel", icon: "vercel", website: "https://vercel.com" },
-  { id: "figma", name: "Figma", icon: "figma", website: "https://figma.com" },
-  { id: "notion", name: "Notion", icon: "notion", website: "https://notion.so" },
-  { id: "slack", name: "Slack", icon: "", website: "https://slack.com" },
-  { id: "supabase", name: "Supabase", icon: "supabase", website: "https://supabase.com" },
-  { id: "custom", name: "Other app", icon: "", website: "" },
-] as const;
 
 export function subscriptionStatus(entry: Subscription, today: string) {
   if (entry.startsOn > today) return "Scheduled";

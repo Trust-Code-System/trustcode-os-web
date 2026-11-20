@@ -2,12 +2,14 @@
 
 import Image from "next/image";
 import { useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
-import { Download, ExternalLink, Plus, Upload } from "lucide-react";
+import { Check, Download, ExternalLink, Plus, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/data-display";
 import { Alert, EmptyState } from "@/components/ui/feedback";
 import { Input, Select } from "@/components/ui/form-controls";
 import { PageHeader } from "@/components/ui/navigation";
+import { Dialog } from "@/components/ui/overlays";
+import { appCatalog } from "../catalog";
 import { providers, subscriptionSchema, subscriptionsFileSchema, subscriptionStatus, type Subscription } from "../subscriptions";
 
 const storageKey = "trustcode-app-subscriptions-v1";
@@ -43,11 +45,13 @@ export function AppsScreen() {
     try { return parseStorage(raw); }
     catch { return null; }
   }, [raw]);
-  const [editing, setEditing] = useState<Subscription | "new" | null>(null);
+  const [editing, setEditing] = useState<{ entry: Subscription | undefined; provider: Subscription["provider"] } | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [search, setSearch] = useState("");
   const [type, setType] = useState("ALL");
+  const [view, setView] = useState("catalog");
+  const [category, setCategory] = useState("All categories");
   const importInput = useRef<HTMLInputElement>(null);
   const today = new Date().toLocaleDateString("en-CA");
   const entries = file?.subscriptions ?? [];
@@ -73,7 +77,8 @@ export function AppsScreen() {
 
   function save(entry: Subscription) {
     const saved = update((current) => [...current.filter((item) => item.id !== entry.id), entry], `${entry.name} saved.`);
-    if (saved) setEditing(null);
+    if (saved) { setEditing(null); setView("subscriptions"); setSearch(""); setType("ALL"); }
+    return saved;
   }
 
   function exportFile() {
@@ -88,24 +93,24 @@ export function AppsScreen() {
 
   async function importFile(upload: File) {
     try {
-      if (upload.size > 2_000_000) throw new Error("File too large");
+      if (upload.size > 10_000_000) throw new Error("File too large");
       const imported = subscriptionsFileSchema.parse(JSON.parse(await upload.text()));
       if (!window.confirm(`Replace this browser's subscriptions with ${imported.subscriptions.length} imported entries?`)) return;
       persist(imported.subscriptions);
       setEditing(null);
       setNotice("Subscriptions imported and saved in this browser.");
     } catch {
-      setError("Import failed. Choose a valid TrustCode subscriptions JSON backup under 2 MB.");
+      setError("Import failed. Choose a valid TrustCode subscriptions JSON backup under 10 MB.");
     }
   }
 
   return (
     <>
-      <PageHeader title="Apps & subscriptions" description="Track software plans, API spending, payments, and renewal dates." actions={
+      <PageHeader title="Apps & subscriptions" description="Browse your tools, then track app plans, API costs, and renewal dates." actions={
         <>
           <Button variant="secondary" onClick={exportFile} disabled={!file}><Download aria-hidden className="size-4" />Export</Button>
           <Button variant="secondary" onClick={() => importInput.current?.click()}><Upload aria-hidden className="size-4" />Import</Button>
-          <Button onClick={() => { setEditing("new"); setNotice(""); }} disabled={!file}><Plus aria-hidden className="size-4" />Add subscription</Button>
+          <Button onClick={() => { setEditing({ entry: undefined, provider: "custom" }); setNotice(""); }} disabled={!file}><Plus aria-hidden className="size-4" />Add another app</Button>
         </>
       } />
       <input ref={importInput} type="file" accept="application/json,.json" aria-label="Import subscriptions backup" className="sr-only" tabIndex={-1} onChange={(event) => {
@@ -117,20 +122,24 @@ export function AppsScreen() {
       {!file ? <Alert variant="danger" title="Saved subscriptions could not be read">Browser storage is unavailable or the saved data is invalid. Import a valid backup to restore your records.</Alert> : null}
       {error ? <div className="mb-4"><Alert variant="danger" title="Subscription could not be saved">{error}</Alert></div> : null}
       <p role="status" className="mb-4 text-sm text-text-secondary">{notice}</p>
-      {editing ? <SubscriptionForm key={editing === "new" ? "new" : editing.id} entry={editing === "new" ? undefined : editing} onSave={save} onCancel={() => setEditing(null)} /> : null}
+      {editing ? <Dialog open onOpenChange={(open) => { if (!open) setEditing(null); }} title={editing.entry ? "Edit subscription" : "Track an app or API"} description="Record your plan, cost, payment status, and dates.">
+        <SubscriptionForm key={editing.entry?.id ?? editing.provider} entry={editing.entry} initialProvider={editing.provider} onSave={save} onCancel={() => setEditing(null)} />
+      </Dialog> : null}
+      <div className="mb-5 flex flex-wrap gap-2" role="group" aria-label="App views">
+        <Button variant={view === "catalog" ? "primary" : "secondary"} aria-pressed={view === "catalog"} onClick={() => { setView("catalog"); setSearch(""); }}>App catalog ({appCatalog.length})</Button>
+        <Button variant={view === "subscriptions" ? "primary" : "secondary"} aria-pressed={view === "subscriptions"} onClick={() => { setView("subscriptions"); setSearch(""); }}>My subscriptions ({entries.length})</Button>
+      </div>
       <div className="surface-panel mb-5 grid gap-3 p-3 sm:grid-cols-2">
         <Input type="search" aria-label="Search subscriptions" placeholder="Search apps and tools" value={search} onChange={(event) => setSearch(event.target.value)} />
-        <Select aria-label="Filter subscription type" value={type} onValueChange={setType}><option value="ALL">Apps & APIs</option><option value="APP">App plans</option><option value="API">API access</option></Select>
+        {view === "catalog" ? <Select aria-label="Filter app category" value={category} onValueChange={setCategory}>{["All categories", ...new Set(appCatalog.map((app) => app.category))].map((value) => <option key={value} value={value}>{value}</option>)}</Select> : <Select aria-label="Filter subscription type" value={type} onValueChange={setType}><option value="ALL">Apps & APIs</option><option value="APP">App plans</option><option value="API">API access</option></Select>}
       </div>
-      {visible.length ? <ul className="grid gap-4 xl:grid-cols-2">
+      {view === "catalog" ? <AppCatalog search={search} category={category} entries={entries} disabled={!file} onAdd={(provider) => setEditing({ entry: undefined, provider })} onEdit={(entry) => setEditing({ entry, provider: entry.provider })} /> : visible.length ? <ul className="grid gap-4 xl:grid-cols-2">
         {visible.map((entry) => {
           const provider = providers.find((item) => item.id === entry.provider)!;
           const status = subscriptionStatus(entry, today);
           return <li key={entry.id} className="surface-panel min-w-0 p-5">
             <div className="flex items-start gap-3">
-              <span className="grid size-12 shrink-0 place-items-center rounded-xl border bg-white text-base font-semibold text-black">
-                {provider.icon ? <Image src={`/app-logos/${provider.icon}.svg`} alt="" width={26} height={26} unoptimized /> : entry.name.slice(0, 2).toUpperCase()}
-              </span>
+              <AppLogo name={entry.name} icon={provider.icon} logo={entry.logo} />
               <div className="min-w-0 flex-1">
                 <h2 className="break-words font-semibold">{entry.name}</h2>
                 <div className="mt-2 flex flex-wrap gap-2"><Badge>{entry.type === "API" ? "API access" : "App plan"}</Badge><Badge tone={status === "Expired" ? "danger" : status === "Expiring soon" ? "warning" : "neutral"}>{status}</Badge></div>
@@ -143,7 +152,7 @@ export function AppsScreen() {
             </dl>
             <div className="flex flex-wrap items-center gap-2 border-t pt-4">
               <Button size="sm" variant={entry.paid ? "secondary" : "primary"} aria-pressed={entry.paid} aria-label={`${entry.paid ? "Mark unpaid" : "Mark paid"} for ${entry.name}`} onClick={() => update((current) => current.map((item) => item.id === entry.id ? { ...item, paid: !item.paid } : item), `${entry.name} payment updated.`)}>{entry.paid ? "Paid" : "Mark paid"}</Button>
-              <Button size="sm" variant="ghost" onClick={() => setEditing(entry)} aria-label={`Edit ${entry.name}`}>Edit</Button>
+              <Button size="sm" variant="ghost" onClick={() => setEditing({ entry, provider: entry.provider })} aria-label={`Edit ${entry.name}`}>Edit</Button>
               <Button size="sm" variant="ghost" onClick={() => {
                 if (window.confirm(`Remove ${entry.name} from your subscriptions?`)) update((current) => current.filter((item) => item.id !== entry.id), `${entry.name} removed.`);
               }} aria-label={`Remove ${entry.name}`}>Remove</Button>
@@ -151,37 +160,84 @@ export function AppsScreen() {
             </div>
           </li>;
         })}
-      </ul> : file ? <EmptyState title={entries.length ? "No matching subscriptions" : "Track your first app or API"} description={entries.length ? "Try another search or type filter." : "Add Codex, Claude, or another tool with its actual price and dates."} /> : null}
+      </ul> : file ? <EmptyState title={entries.length ? "No matching subscriptions" : "Track your first app or API"} description={entries.length ? "Try another search or type filter." : "Choose an app from the catalog to record its price and dates."} action={<Button onClick={() => { setView("catalog"); setSearch(""); }}>Browse app catalog</Button>} /> : null}
       <p className="mt-6 text-xs text-text-secondary">Logos from <a href="https://github.com/simple-icons/simple-icons" target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">Simple Icons<span className="sr-only"> (opens in a new tab)</span></a> and <a href="https://github.com/lobehub/lobe-icons" target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">Lobe Icons<span className="sr-only"> (opens in a new tab)</span></a>.</p>
     </>
   );
 }
 
-function SubscriptionForm({ entry, onSave, onCancel }: { entry: Subscription | undefined; onSave: (entry: Subscription) => void; onCancel: () => void }) {
-  const [provider, setProvider] = useState<Subscription["provider"]>(entry?.provider ?? "codex");
-  const [name, setName] = useState(entry?.name ?? "Codex");
+function AppLogo({ name, icon, logo }: { name: string; icon: string; logo?: string | undefined }) {
+  const source = logo || (icon ? `/app-logos/${icon}.svg` : "");
+  const [failedSource, setFailedSource] = useState("");
+  return <span className="grid size-12 shrink-0 place-items-center rounded-xl border bg-white text-base font-semibold text-black">
+    {source && source !== failedSource ? <Image src={source} alt="" width={28} height={28} unoptimized className="max-h-8 object-contain" onError={() => setFailedSource(source)} /> : name.slice(0, 2).toUpperCase()}
+  </span>;
+}
+
+function AppCatalog({ search, category, entries, disabled, onAdd, onEdit }: {
+  search: string;
+  category: string;
+  entries: Subscription[];
+  disabled: boolean;
+  onAdd: (provider: Subscription["provider"]) => void;
+  onEdit: (entry: Subscription) => void;
+}) {
+  const query = search.trim().toLowerCase();
+  const apps = appCatalog.filter((app) => (category === "All categories" || app.category === category) && app.name.toLowerCase().includes(query));
+  const custom = entries.filter((entry) => entry.provider === "custom" && entry.name.toLowerCase().includes(query) && category === "All categories");
+  if (!apps.length && !custom.length) return <EmptyState title="No matching apps" description="Try another name or category, or add your own app." />;
+  return <div className="grid gap-7">
+    {[...new Set(apps.map((app) => app.category))].map((group) => <section key={group} aria-label={`${group} apps`}>
+      <h2 className="mb-3 text-sm font-semibold">{group}</h2>
+      <ul className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+        {apps.filter((app) => app.category === group).map((app) => {
+          const count = entries.filter((entry) => entry.provider === app.id).length;
+          return <li key={app.id} className="min-w-0">
+            <button type="button" disabled={disabled} onClick={() => onAdd(app.id)} aria-label={`Track ${app.name}`} className="flex h-full w-full items-center gap-3 rounded-xl border bg-surface p-3 text-left transition-colors hover:border-brand hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-brand disabled:opacity-50">
+              <AppLogo name={app.name} icon={app.icon} />
+              <span className="min-w-0 flex-1"><span className="block break-words text-sm font-semibold">{app.name}</span><span className="mt-1 block text-xs text-text-secondary">{count ? `${count} ${count === 1 ? "plan" : "plans"} tracked` : "Add a plan or API"}</span></span>
+              {count ? <Check aria-hidden className="size-4 shrink-0 text-brand" /> : <Plus aria-hidden className="size-4 shrink-0 text-text-secondary" />}
+            </button>
+          </li>;
+        })}
+      </ul>
+    </section>)}
+    {custom.length ? <section aria-label="Added apps"><h2 className="mb-3 text-sm font-semibold">Added apps</h2><ul className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">{custom.map((entry) => <li key={entry.id}><button type="button" disabled={disabled} onClick={() => onEdit(entry)} className="flex w-full items-center gap-3 rounded-xl border bg-surface p-3 text-left hover:bg-surface-hover"><AppLogo name={entry.name} icon="" logo={entry.logo} /><span className="min-w-0 break-words text-sm font-semibold">{entry.name}</span></button></li>)}</ul></section> : null}
+  </div>;
+}
+
+function SubscriptionForm({ entry, initialProvider, onSave, onCancel }: { entry: Subscription | undefined; initialProvider: Subscription["provider"]; onSave: (entry: Subscription) => boolean; onCancel: () => void }) {
+  const [provider, setProvider] = useState<Subscription["provider"]>(entry?.provider ?? initialProvider);
+  const [name, setName] = useState(entry?.name ?? (initialProvider === "custom" ? "" : providers.find((item) => item.id === initialProvider)!.name));
   const [error, setError] = useState("");
+  const [logo, setLogo] = useState(entry?.logo ?? "");
+  const [readingLogo, setReadingLogo] = useState(false);
+  const logoRequest = useRef(0);
+  const selected = providers.find((item) => item.id === provider)!;
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     const result = subscriptionSchema.safeParse({
-      id: entry?.id ?? crypto.randomUUID(), name, provider,
+      id: entry?.id ?? crypto.randomUUID(), name, provider, ...(logo ? { logo } : {}),
       type: data.get("type"), amount: Number(data.get("amount")), currency: data.get("currency"),
       billing: data.get("billing"), paid: data.get("paid") === "on",
       startsOn: data.get("startsOn"), expiresOn: data.get("expiresOn"),
     });
     if (!result.success) { setError(result.error.issues[0]?.message ?? "Check your subscription details."); return; }
     setError("");
-    onSave(result.data);
+    if (!onSave(result.data)) setError("This subscription could not be saved. Check browser storage access or export a backup and free some space.");
   }
 
-  return <form onSubmit={submit} className="surface-panel mb-5 p-5" aria-labelledby="subscription-form-heading">
-    <h2 id="subscription-form-heading" className="mb-4 font-semibold">{entry ? "Edit subscription" : "Add subscription"}</h2>
+  return <form onSubmit={submit}>
+    <div className="mb-5 flex items-center gap-3"><AppLogo name={name || "App"} icon={selected.icon} logo={logo} /><p className="font-semibold">{name || "Your app"}</p></div>
     <div className="grid gap-4 sm:grid-cols-2">
       <label className="grid gap-2 text-sm">Tool<Select aria-label="Tool" value={provider} onValueChange={(value) => {
         const next = providers.find((item) => item.id === value)!;
         setProvider(next.id);
+        logoRequest.current += 1;
+        setReadingLogo(false);
+        setLogo("");
         setName(next.id === "custom" ? "" : next.name);
       }}>{providers.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</Select></label>
       <label className="grid gap-2 text-sm">App / plan name<Input required maxLength={100} value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. Claude Pro" /></label>
@@ -192,8 +248,35 @@ function SubscriptionForm({ entry, onSave, onCancel }: { entry: Subscription | u
       <label className="grid gap-2 text-sm">Start date<Input name="startsOn" type="date" required defaultValue={entry?.startsOn ?? new Date().toLocaleDateString("en-CA")} /></label>
       <label className="grid gap-2 text-sm">Expiry / renewal date (optional)<Input name="expiresOn" type="date" defaultValue={entry?.expiresOn ?? ""} /></label>
     </div>
+    {provider === "custom" ? <div className="mt-4">
+      <label className="grid gap-2 text-sm">App logo<Input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        const request = ++logoRequest.current;
+        setReadingLogo(false);
+        if (!["image/png", "image/jpeg", "image/webp"].includes(file.type) || file.size > 256_000) { setError("Choose a PNG, JPEG, or WebP logo under 256 KB."); return; }
+        setReadingLogo(true);
+        const reader = new FileReader();
+        reader.onload = async () => {
+          const image = new window.Image();
+          image.src = String(reader.result);
+          try {
+            await image.decode();
+            if (request === logoRequest.current) { setLogo(image.src); setError(""); }
+          } catch {
+            if (request === logoRequest.current) setError("The logo could not be read. Try another image.");
+          } finally {
+            if (request === logoRequest.current) setReadingLogo(false);
+          }
+        };
+        reader.onerror = () => { if (request === logoRequest.current) { setReadingLogo(false); setError("The logo could not be read. Try another image."); } };
+        reader.readAsDataURL(file);
+      }} /></label>
+      <p className="mt-2 text-xs text-text-secondary">PNG, JPEG, or WebP, up to 256 KB.</p>
+      {logo ? <Button type="button" variant="ghost" size="sm" onClick={() => { logoRequest.current += 1; setReadingLogo(false); setLogo(""); }}>Remove logo</Button> : null}
+    </div> : null}
     <label className="my-5 flex items-center gap-2 text-sm"><input name="paid" type="checkbox" defaultChecked={entry?.paid ?? false} className="size-4 accent-brand" />Paid for the current period</label>
     {error ? <p role="alert" className="mb-4 text-sm text-danger">{error}</p> : null}
-    <div className="flex flex-wrap gap-2"><Button type="submit">Save subscription</Button><Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button></div>
+    <div className="flex flex-wrap gap-2"><Button type="submit" disabled={readingLogo}>{readingLogo ? "Reading logo…" : "Save subscription"}</Button><Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button></div>
   </form>;
 }

@@ -6,3 +6,50 @@ Brand names and trademarks belong to their respective owners.
 Codex logo from Lobe Icons (https://github.com/lobehub/lobe-icons).
 Source commit 9752d967494e48d8f83f2808feb2b0207bf70997.
 Distributed under the MIT License. See LOBE-LICENSE.txt.
+
+Catalog additions use the pinned Simple Icons and Lobe Icons sources above.
+Canva and Slack logos use Simple Icons version 13.21.0, commit 3fd92a7d0656c3d780bccdf7b5a3e9b9991dd6e5 (CC0-1.0).
+
+Catalog asset sources
+chatgpt: https://raw.githubusercontent.com/lobehub/lobe-icons/9752d967494e48d8f83f2808feb2b0207bf70997/packages/static-svg/icons/openai.svg
+gemini: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/googlegemini.svg
+github-copilot: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/githubcopilot.svg
+cursor: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/cursor.svg
+windsurf: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/windsurf.svg
+perplexity: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/perplexity.svg
+v0: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/v0.svg
+bolt: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/stackblitz.svg
+replit: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/replit.svg
+lovable: https://raw.githubusercontent.com/lobehub/lobe-icons/9752d967494e48d8f83f2808feb2b0207bf70997/packages/static-svg/icons/lovable.svg
+huggingface: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/huggingface.svg
+openrouter: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/openrouter.svg
+xai: https://raw.githubusercontent.com/lobehub/lobe-icons/9752d967494e48d8f83f2808feb2b0207bf70997/packages/static-svg/icons/grok.svg
+deepseek: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/deepseek.svg
+mistral: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/mistralai.svg
+groq: https://raw.githubusercontent.com/lobehub/lobe-icons/9752d967494e48d8f83f2808feb2b0207bf70997/packages/static-svg/icons/groq.svg
+replicate: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/replicate.svg
+gitlab: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/gitlab.svg
+netlify: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/netlify.svg
+cloudflare: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/cloudflare.svg
+firebase: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/firebase.svg
+neon: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/neon.svg
+mongodb: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/mongodb.svg
+planetscale: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/planetscale.svg
+railway: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/railway.svg
+render: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/render.svg
+digitalocean: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/digitalocean.svg
+aws: https://raw.githubusercontent.com/lobehub/lobe-icons/9752d967494e48d8f83f2808feb2b0207bf70997/packages/static-svg/icons/aws.svg
+docker: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/docker.svg
+postman: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/postman.svg
+sentry: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/sentry.svg
+datadog: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/datadog.svg
+linear: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/linear.svg
+jira: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/jira.svg
+framer: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/framer.svg
+webflow: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/webflow.svg
+canva: https://raw.githubusercontent.com/simple-icons/simple-icons/3fd92a7d0656c3d780bccdf7b5a3e9b9991dd6e5/icons/canva.svg
+adobe: https://raw.githubusercontent.com/lobehub/lobe-icons/9752d967494e48d8f83f2808feb2b0207bf70997/packages/static-svg/icons/adobe.svg
+slack: https://raw.githubusercontent.com/simple-icons/simple-icons/3fd92a7d0656c3d780bccdf7b5a3e9b9991dd6e5/icons/slack.svg
+zoom: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/zoom.svg
+google-workspace: https://raw.githubusercontent.com/simple-icons/simple-icons/32e030086fdc605196391aab28519b14dc4295b4/icons/google.svg
+microsoft365: https://raw.githubusercontent.com/lobehub/lobe-icons/9752d967494e48d8f83f2808feb2b0207bf70997/packages/static-svg/icons/microsoft.svg
