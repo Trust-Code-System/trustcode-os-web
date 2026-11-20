@@ -35,7 +35,6 @@ async function handler(request: NextRequest, context: Context) {
       }
     }
     const responseHeaders = new Headers();
-    responseHeaders.set("Cache-Control", "private, no-store");
     for (const name of ["content-type", "content-disposition", "content-length", "x-request-id"]) {
       const value = response.headers.get(name);
       if (value) responseHeaders.set(name, value);

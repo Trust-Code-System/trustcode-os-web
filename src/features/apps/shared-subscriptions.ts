@@ -7,13 +7,13 @@ export const sharedSubscriptionsSchema = subscriptionsFileSchema.extend({ revisi
 export const subscriptionsQueryKey = ["app-subscriptions"] as const;
 
 export async function readSharedSubscriptions(signal?: AbortSignal) {
-  const result = await apiRequest<unknown>("/api/backend/subscriptions", { ...(signal ? { signal } : {}), cache: "no-store" });
+  const result = await apiRequest<unknown>("/api/subscriptions", { ...(signal ? { signal } : {}), cache: "no-store" });
   return sharedSubscriptionsSchema.parse(result.data);
 }
 
 export async function saveSharedSubscriptions(revision: number, subscriptions: Subscription[]) {
   const file = subscriptionsFileSchema.parse({ version: 1, subscriptions });
   if (new TextEncoder().encode(JSON.stringify(file)).byteLength > 4_000_000) throw new AppError({ message: "Workspace subscriptions exceed 4 MB. Use smaller logos or remove unused entries." });
-  const result = await apiRequest<unknown>("/api/backend/subscriptions", { method: "PUT", body: { revision, subscriptions: file.subscriptions } });
+  const result = await apiRequest<unknown>("/api/subscriptions", { method: "PUT", body: { revision, subscriptions: file.subscriptions } });
   return sharedSubscriptionsSchema.parse(result.data);
 }
